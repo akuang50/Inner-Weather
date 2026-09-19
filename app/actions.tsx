@@ -61,7 +61,7 @@ export default function ActionsScreen() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  content: { padding: spacing.lg, paddingBottom: spacing.cue },
   title: {
     fontFamily: 'Fraunces_600SemiBold',
     fontSize: 32,

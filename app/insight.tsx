@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   content: {
     padding: spacing.lg,
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.cue,
   },
   kicker: {
     fontFamily: 'DMSans_500Medium',
@@ -87,8 +87,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Fraunces_600SemiBold',
-    fontSize: 32,
-    lineHeight: 38,
+    fontSize: 30,
+    lineHeight: 36,
     color: colors.primary,
     marginBottom: spacing.md,
   },

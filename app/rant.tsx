@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Audio } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -10,6 +10,7 @@ import { Button } from '../src/components/ui';
 import { demoHealthSignals } from '../src/data/demoDataset';
 import { liveFusionPreview } from '../src/engine/daySeries';
 import { analyzeTranscriptLocally } from '../src/engine/stress';
+import { canUseWebSpeech, startWebSpeech } from '../src/lib/webSpeech';
 import { useApp } from '../src/state/AppContext';
 import { colors, spacing } from '../src/theme';
 
@@ -22,11 +23,16 @@ export default function RantScreen() {
   const [phase, setPhase] = useState<Phase>('idle');
   const [draft, setDraft] = useState('');
   const recordingRef = useRef<Audio.Recording | null>(null);
+  const stopSpeech = useRef<(() => void) | null>(null);
+  const liveSpeech = useRef('');
   const startedAt = useRef<number>(0);
   const router = useRouter();
   const { addRant, analyses } = useApp();
 
-  const previewText = draft.trim() || (phase === 'processing' || phase === 'linking' ? DEMO_TRANSCRIPT : '');
+  const previewText =
+    draft.trim() ||
+    liveSpeech.current ||
+    (phase === 'processing' || phase === 'linking' ? DEMO_TRANSCRIPT : '');
   const live = useMemo(
     () => liveFusionPreview(demoHealthSignals, analyses, previewText, analyzeTranscriptLocally),
     [analyses, previewText],
@@ -34,7 +40,15 @@ export default function RantScreen() {
 
   const start = async () => {
     startedAt.current = Date.now();
+    liveSpeech.current = '';
     setPhase('recording');
+    if (Platform.OS === 'web' && canUseWebSpeech()) {
+      stopSpeech.current = startWebSpeech((text) => {
+        liveSpeech.current = text;
+        setDraft(text);
+      });
+      return;
+    }
     try {
       const permission = await Audio.requestPermissionsAsync();
       if (!permission.granted) return;
@@ -47,7 +61,7 @@ export default function RantScreen() {
       await recording.startAsync();
       recordingRef.current = recording;
     } catch {
-      // demo path
+      // demo path — typed / seeded transcript still fuses
     }
   };
 
@@ -56,7 +70,7 @@ export default function RantScreen() {
     await new Promise((r) => setTimeout(r, 700));
     setPhase('linking');
     setDraft(transcript);
-    await new Promise((r) => setTimeout(r, 1100));
+    await new Promise((r) => setTimeout(r, 900));
     const durationSec = Math.max(3, Math.round((Date.now() - startedAt.current) / 1000));
     addRant(transcript, durationSec);
     router.replace('/insight');
@@ -64,6 +78,8 @@ export default function RantScreen() {
 
   const stop = async () => {
     if (phase !== 'recording') return;
+    stopSpeech.current?.();
+    stopSpeech.current = null;
     try {
       if (recordingRef.current) {
         await recordingRef.current.stopAndUnloadAsync();
@@ -72,7 +88,7 @@ export default function RantScreen() {
     } catch {
       // ignore
     }
-    await finishWith(draft.trim() || DEMO_TRANSCRIPT);
+    await finishWith(draft.trim() || liveSpeech.current.trim() || DEMO_TRANSCRIPT);
   };
 
   return (
@@ -82,7 +98,7 @@ export default function RantScreen() {
           <Button label="Back" variant="ghost" onPress={() => router.back()} />
           <Text style={styles.title}>Tell me what’s going on</Text>
           <Text style={styles.hint}>
-            Hold to talk — or type. We’ll fuse it with today’s body deviations.
+            Hold to talk — or type. We’ll fuse it with today’s body deviations. Not a diagnosis.
           </Text>
         </View>
 
@@ -145,6 +161,7 @@ const styles = StyleSheet.create({
     color: colors.muted,
     paddingHorizontal: spacing.sm,
     marginBottom: spacing.sm,
+    lineHeight: 22,
   },
   center: {
     flex: 1,
@@ -154,7 +171,7 @@ const styles = StyleSheet.create({
   },
   bottom: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.cue,
     gap: spacing.sm,
   },
   input: {

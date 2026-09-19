@@ -1,3 +1,4 @@
+import { liveAppUrl } from '../lib/paths'
 import { Eyebrow, Reveal } from './ui'
 import { StressGraph } from './StressGraph'
 
@@ -26,11 +27,11 @@ export function Hero() {
             you might not notice yourself.
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
-            <a href="#demo" className="btn-primary">
-              Explore your signals
+            <a href={liveAppUrl} className="btn-primary">
+              Open the live app
             </a>
-            <a href="#voice" className="btn-secondary">
-              Try a voice rant
+            <a href="#demo" className="btn-secondary">
+              Explore your signals
             </a>
           </div>
           <div className="mt-10 flex items-center gap-4 text-sm text-muted">

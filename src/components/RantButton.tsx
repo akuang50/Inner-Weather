@@ -12,40 +12,59 @@ type Props = {
 
 export function RantButton({ phase, onPressIn, onPressOut }: Props) {
   const pulse = useRef(new Animated.Value(1)).current;
+  const halo = useRef(new Animated.Value(0.35)).current;
 
   useEffect(() => {
     pulse.stopAnimation();
+    halo.stopAnimation();
     if (phase === 'idle') {
       Animated.timing(pulse, { toValue: 1, duration: 220, useNativeDriver: true }).start();
+      Animated.timing(halo, { toValue: 0.2, duration: 220, useNativeDriver: true }).start();
       return;
     }
-    const toValue = phase === 'recording' ? 1.08 : 0.92;
+    const toValue = phase === 'recording' ? 1.06 : 0.96;
     const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, {
-          toValue,
-          duration: phase === 'recording' ? 700 : 900,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulse, {
-          toValue: 1,
-          duration: phase === 'recording' ? 700 : 900,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(pulse, {
+            toValue,
+            duration: phase === 'recording' ? 900 : 1000,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulse, {
+            toValue: 1,
+            duration: phase === 'recording' ? 900 : 1000,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.sequence([
+          Animated.timing(halo, {
+            toValue: 0.7,
+            duration: 900,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(halo, {
+            toValue: 0.25,
+            duration: 900,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ]),
       ]),
     );
     loop.start();
     return () => loop.stop();
-  }, [phase, pulse]);
+  }, [phase, pulse, halo]);
 
   const caption =
     phase === 'idle'
-      ? 'Tell me what’s\ngoing on'
+      ? 'Hold to talk'
       : phase === 'recording'
-        ? 'Listening...'
-        : 'Connecting\ndots...';
+        ? 'Listening…'
+        : 'Connecting dots…';
 
   return (
     <Pressable
@@ -55,23 +74,38 @@ export function RantButton({ phase, onPressIn, onPressOut }: Props) {
       accessibilityLabel="Hold to tell me what’s going on"
       style={styles.wrap}
     >
-      <Animated.View
-        style={[
-          styles.ring,
-          phase === 'recording' && styles.ringHot,
-          phase === 'processing' && styles.ringProcess,
-          { transform: [{ scale: pulse }] },
-        ]}
-      >
-        <View
+      <View style={styles.stage}>
+        <Animated.View
           style={[
-            styles.core,
-            phase === 'recording' && styles.coreHot,
-            phase === 'processing' && styles.coreProcess,
+            styles.halo,
+            {
+              opacity: halo,
+              transform: [{ scale: pulse }],
+              borderColor: phase === 'recording' ? colors.stress : colors.insight,
+            },
           ]}
         />
-      </Animated.View>
+        <Animated.View
+          style={[
+            styles.ring,
+            phase === 'recording' && styles.ringHot,
+            phase === 'processing' && styles.ringProcess,
+            { transform: [{ scale: pulse }] },
+          ]}
+        >
+          <View
+            style={[
+              styles.core,
+              phase === 'recording' && styles.coreHot,
+              phase === 'processing' && styles.coreProcess,
+            ]}
+          />
+        </Animated.View>
+      </View>
       <Text style={styles.caption}>{caption}</Text>
+      <Text style={styles.sub}>
+        {phase === 'idle' ? 'No mood sliders. Just what’s on your mind.' : ' '}
+      </Text>
     </Pressable>
   );
 }
@@ -80,17 +114,30 @@ const styles = StyleSheet.create({
   wrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 18,
+    gap: 14,
+  },
+  stage: {
+    width: 196,
+    height: 196,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  halo: {
+    position: 'absolute',
+    width: 196,
+    height: 196,
+    borderRadius: 98,
+    borderWidth: 1,
   },
   ring: {
     width: 168,
     height: 168,
     borderRadius: 84,
-    borderWidth: 1.5,
-    borderColor: 'rgba(21,23,26,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(21,23,26,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.55)',
+    backgroundColor: 'rgba(255,255,255,0.7)',
   },
   ringHot: {
     borderColor: colors.stress,
@@ -101,10 +148,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(91,108,255,0.08)',
   },
   core: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1.5,
     borderColor: colors.primary,
     backgroundColor: 'transparent',
   },
@@ -113,9 +160,9 @@ const styles = StyleSheet.create({
     borderColor: colors.stress,
   },
   coreProcess: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     borderStyle: 'dashed',
     backgroundColor: 'transparent',
     borderColor: colors.insight,
@@ -123,8 +170,14 @@ const styles = StyleSheet.create({
   caption: {
     textAlign: 'center',
     fontFamily: 'Fraunces_500Medium',
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 26,
+    lineHeight: 32,
     color: colors.primary,
+  },
+  sub: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: colors.muted,
+    minHeight: 18,
   },
 });

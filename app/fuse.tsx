@@ -54,7 +54,7 @@ export default function FuseScreen() {
         >
           <Button label="Back" variant="ghost" onPress={() => router.back()} />
           <Text style={styles.brand}>Inner Weather</Text>
-          <Text style={styles.title}>Live multimodal fuse</Text>
+          <Text style={styles.title}>Watch body and words meet</Text>
           <Text style={styles.sub}>
             Body signals are already off your baseline. Add language — watch whether the channels
             co-occur.
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   content: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xxl,
+            paddingBottom: spacing.cue,
   },
   brand: {
     fontFamily: 'Fraunces_600SemiBold',

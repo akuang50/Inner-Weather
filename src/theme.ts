@@ -19,6 +19,8 @@ export const spacing = {
   lg: 24,
   xl: 36,
   xxl: 48,
+  /** Space so the floating 2-min demo cue doesn't cover CTAs. */
+  cue: 88,
 } as const;
 
 export const radii = {

@@ -1,3 +1,4 @@
+import { liveAppUrl } from '../lib/paths'
 import { Reveal, Section } from './ui'
 
 export function FinalCTA() {
@@ -10,9 +11,14 @@ export function FinalCTA() {
           <br />
           <span className="italic text-ink/55">You need to understand yourself.</span>
         </h2>
-        <a href="#demo" className="btn-primary mt-10">
-          Try Stress Monitor
-        </a>
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+          <a href={liveAppUrl} className="btn-primary">
+            Open the live app
+          </a>
+          <a href="#demo" className="btn-secondary">
+            Try Stress Monitor
+          </a>
+        </div>
         <p className="mt-5 text-sm text-muted">Built for HackMIT 2026.</p>
       </Reveal>
     </Section>
@@ -31,6 +37,9 @@ export function Footer() {
           <p className="mt-2 text-sm text-muted">Personal stress intelligence.</p>
         </div>
         <div className="flex flex-wrap gap-5 text-sm text-muted">
+          <a href={liveAppUrl} className="transition hover:text-ink">
+            Live app
+          </a>
           <a href="#demo" className="transition hover:text-ink">
             Demo
           </a>

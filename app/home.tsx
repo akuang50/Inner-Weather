@@ -4,16 +4,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FusionDiagram } from '../src/components/FusionDiagram';
+import { MetricPills, SignalHero } from '../src/components/SignalHero';
 import { Button } from '../src/components/ui';
 import { demoHealthSignals } from '../src/data/demoDataset';
 import { buildDaySeries } from '../src/engine/daySeries';
 import { useApp } from '../src/state/AppContext';
-import { colors, spacing, stressWarmth } from '../src/theme';
+import { colors, spacing } from '../src/theme';
 
 export default function HomeScreen() {
   const { preferences, snapshot, journals, analyses } = useApp();
   const router = useRouter();
-  const bg = stressWarmth(snapshot.score);
+  const bg = snapshot.score >= 70 ? '#F3EFEA' : snapshot.score >= 50 ? '#F6F4F2' : '#F7F8FA';
 
   const series = useMemo(
     () => buildDaySeries(demoHealthSignals, journals, analyses, 7),
@@ -33,14 +34,21 @@ export default function HomeScreen() {
     <LinearGradient colors={[bg, '#F7F8FA', '#EEF2F4']} style={styles.fill}>
       <SafeAreaView style={styles.fill}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <Text style={styles.brand}>Inner Weather</Text>
-          <Text style={styles.hello}>
-            {preferences.name}, something in you shifted.
-          </Text>
+          <View style={styles.top}>
+            <Text style={styles.brand}>Inner Weather</Text>
+            <Text style={styles.hello}>{preferences.name}</Text>
+          </View>
           <Text style={styles.lede}>
-            Not vs other people — vs <Text style={styles.em}>your</Text> baseline. Body, words,
-            and message tone moved together.
+            Something in you shifted — vs <Text style={styles.em}>your</Text> baseline, not vs other
+            people.
           </Text>
+
+          <SignalHero
+            score={snapshot.score}
+            baseline={snapshot.baselineScore}
+            change={snapshot.change}
+          />
+          <MetricPills deviations={snapshot.metricDeviations} />
 
           <FusionDiagram
             body={today?.bodyScore ?? snapshot.physiologicalSignal}
@@ -52,21 +60,17 @@ export default function HomeScreen() {
 
           <Text style={styles.fusionLine}>{fusionLine}</Text>
 
-          <Pressable style={styles.primaryHit} onPress={() => router.push('/fuse')}>
-            <Text style={styles.primaryHitLabel}>Watch the signals fuse</Text>
-            <Text style={styles.primaryHitSub}>
-              Type what’s on your mind — see body + words connect live
-            </Text>
+          <Pressable style={styles.primaryHit} onPress={() => router.push('/rant')}>
+            <Text style={styles.primaryHitLabel}>Tell me what’s going on</Text>
+            <Text style={styles.primaryHitSub}>Hold to talk, or type. We’ll fuse it with today.</Text>
           </Pressable>
 
-          <View style={styles.rowActions}>
-            <Button
-              label="Tell me what’s going on"
-              onPress={() => router.push('/rant')}
-              style={{ flex: 1 }}
-            />
-          </View>
-          <Button label="Scrub the week" variant="soft" onPress={() => router.push('/replay')} />
+          <Button
+            label="Watch the signals fuse live"
+            variant="soft"
+            onPress={() => router.push('/fuse')}
+          />
+          <Button label="Scrub the week" variant="ghost" onPress={() => router.push('/replay')} />
           <Button
             label="Why this isn’t a diagnosis"
             variant="ghost"
@@ -74,8 +78,8 @@ export default function HomeScreen() {
           />
 
           <Text style={styles.scoreFoot}>
-            Stress signal {snapshot.score} · baseline ~{snapshot.baselineScore} · confidence{' '}
-            {Math.round(snapshot.confidence * 100)}%
+            Confidence {Math.round(snapshot.confidence * 100)}% · prototype weights · pattern, not a
+            diagnosis
           </Text>
         </ScrollView>
       </SafeAreaView>
@@ -88,29 +92,31 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.cue,
+  },
+  top: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 6,
   },
   brand: {
     fontFamily: 'Fraunces_600SemiBold',
     fontSize: 18,
     letterSpacing: -0.3,
     color: colors.primary,
-    marginBottom: spacing.lg,
   },
   hello: {
-    fontFamily: 'Fraunces_600SemiBold',
-    fontSize: 36,
-    lineHeight: 42,
-    letterSpacing: -0.8,
-    color: colors.primary,
-    marginBottom: spacing.sm,
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 14,
+    color: colors.muted,
   },
   lede: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
-    lineHeight: 26,
+    fontSize: 16,
+    lineHeight: 24,
     color: 'rgba(21,23,26,0.72)',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
     maxWidth: 420,
   },
   em: {
@@ -125,7 +131,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   primaryHit: {
-    paddingVertical: 20,
+    paddingVertical: 18,
     paddingHorizontal: 20,
     borderRadius: 22,
     backgroundColor: colors.primary,
@@ -143,11 +149,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: 'rgba(255,255,255,0.72)',
   },
-  rowActions: {
-    marginBottom: spacing.sm,
-  },
   scoreFoot: {
-    marginTop: spacing.xl,
+    marginTop: spacing.lg,
     fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     color: colors.muted,
