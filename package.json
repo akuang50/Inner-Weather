@@ -6,7 +6,8 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web",
+    "web": "EXPO_NO_TYPED_ROUTES=1 expo start --web",
+    "export:web": "EXPO_NO_TYPED_ROUTES=1 expo export --platform web",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

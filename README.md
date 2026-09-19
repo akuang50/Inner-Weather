@@ -12,12 +12,30 @@ It compares you to **your own baseline** — not a population average — and co
 ```bash
 cd /Users/amy/mit/mithacks26/Inner-Weather
 npm install
-npm start
+npm run web
 ```
 
-Then press `i` for iOS Simulator, `w` for web, or scan the QR code with Expo Go.
+Then open [http://localhost:8081](http://localhost:8081) (or press `i` for iOS / scan with Expo Go).
 
 Requires Node (this repo pins `nodejs 25.4.0` via `.tool-versions` for asdf).
+
+### Live site on GitHub Pages
+
+After you enable Pages (one-time) and push to `main`, the app deploys automatically:
+
+**https://akuang50.github.io/Inner-Weather/**
+
+1. Repo → **Settings** → **Pages**
+2. Under **Build and deployment**, set Source to **GitHub Actions**
+3. Push to `main` (or run the **Deploy GitHub Pages** workflow manually)
+
+Local static build:
+
+```bash
+npm run export:web
+```
+
+Output lands in `dist/`.
 
 ## Demo path (2–3 min)
 
