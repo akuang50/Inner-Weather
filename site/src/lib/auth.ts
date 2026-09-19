@@ -19,6 +19,14 @@ type Session = {
 const USERS_KEY = 'stress-monitor-users-v1'
 const SESSION_KEY = 'stress-monitor-session-v1'
 
+/** Shared demo login for judges / quick try — not secret, browser-local only. */
+export const DEMO_ACCOUNT = {
+  email: 'demo@innerweather.app',
+  password: 'demo12345',
+  displayName: 'Demo',
+  id: 'u-demo-inner-weather',
+} as const
+
 function readUsers(): StoredUser[] {
   try {
     const raw = localStorage.getItem(USERS_KEY)
@@ -154,4 +162,30 @@ export async function loginAccount(input: {
 
 export function logoutAccount() {
   localStorage.removeItem(SESSION_KEY)
+}
+
+export async function ensureDemoAccount(): Promise<void> {
+  const email = normalizeEmail(DEMO_ACCOUNT.email)
+  const users = readUsers()
+  if (users.some((u) => u.email === email)) return
+
+  const salt = 'demo-salt-v1'
+  const passwordHash = await hashPassword(DEMO_ACCOUNT.password, salt)
+  const user: StoredUser = {
+    id: DEMO_ACCOUNT.id,
+    email,
+    displayName: DEMO_ACCOUNT.displayName,
+    createdAt: '2020-01-01T00:00:00.000Z',
+    salt,
+    passwordHash,
+  }
+  writeUsers([...users, user])
+}
+
+export async function loginDemoAccount(): Promise<{ user: AuthUser } | { error: string }> {
+  await ensureDemoAccount()
+  return loginAccount({
+    email: DEMO_ACCOUNT.email,
+    password: DEMO_ACCOUNT.password,
+  })
 }

@@ -14,7 +14,7 @@ import { PrivacySection } from './components/PrivacySection'
 import { FinalCTA, Footer } from './components/FinalCTA'
 import { LoginModal, SignInPrompt } from './components/LoginModal'
 
-function TrackerDemo({ onSignIn }: { onSignIn: () => void }) {
+function TrackerDemo({ onSignIn, onDemo }: { onSignIn: () => void; onDemo: () => void }) {
   const { authenticated, ready } = useTracker()
 
   if (!ready) {
@@ -26,7 +26,7 @@ function TrackerDemo({ onSignIn }: { onSignIn: () => void }) {
   }
 
   if (!authenticated) {
-    return <SignInPrompt onSignIn={onSignIn} />
+    return <SignInPrompt onSignIn={onSignIn} onDemo={onDemo} />
   }
 
   return (
@@ -43,7 +43,7 @@ function TrackerDemo({ onSignIn }: { onSignIn: () => void }) {
 }
 
 function Shell() {
-  const { user } = useAuth()
+  const { user, loginDemo } = useAuth()
   const [loginOpen, setLoginOpen] = useState(false)
   const [loginMode, setLoginMode] = useState<'login' | 'register'>('login')
 
@@ -64,7 +64,10 @@ function Shell() {
         <Hero />
         <div className="section-rule mx-auto max-w-6xl" />
         <div id="demo">
-          <TrackerDemo onSignIn={() => openLogin('login')} />
+          <TrackerDemo
+            onSignIn={() => openLogin('login')}
+            onDemo={() => void loginDemo()}
+          />
         </div>
         <HowItWorks />
         <PrivacySection />

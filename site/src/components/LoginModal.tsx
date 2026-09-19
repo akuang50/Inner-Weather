@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { DEMO_ACCOUNT } from '../lib/auth'
 import { useAuth } from '../state/AuthProvider'
 
 type Mode = 'login' | 'register'
@@ -12,7 +13,7 @@ export function LoginModal({
   onClose: () => void
   initialMode?: Mode
 }) {
-  const { login, register } = useAuth()
+  const { login, register, loginDemo } = useAuth()
   const [mode, setMode] = useState<Mode>(initialMode)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -53,6 +54,18 @@ export function LoginModal({
     }
     onClose()
     setPassword('')
+  }
+
+  const tryDemo = async () => {
+    setError(null)
+    setBusy(true)
+    const err = await loginDemo()
+    setBusy(false)
+    if (err) {
+      setError(err)
+      return
+    }
+    onClose()
   }
 
   return (
@@ -152,12 +165,33 @@ export function LoginModal({
             {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
           </button>
         </form>
+
+        <div className="mt-5 border-t border-border pt-5">
+          <button
+            type="button"
+            className="w-full rounded-xl border border-border bg-bg py-2.5 text-sm text-ink transition hover:bg-white disabled:opacity-60"
+            disabled={busy}
+            onClick={tryDemo}
+          >
+            Continue as demo
+          </button>
+          <p className="mt-2 text-center text-xs text-muted">
+            {DEMO_ACCOUNT.email} · password{' '}
+            <span className="font-mono">{DEMO_ACCOUNT.password}</span>
+          </p>
+        </div>
       </div>
     </div>
   )
 }
 
-export function SignInPrompt({ onSignIn }: { onSignIn: () => void }) {
+export function SignInPrompt({
+  onSignIn,
+  onDemo,
+}: {
+  onSignIn: () => void
+  onDemo?: () => void
+}) {
   return (
     <div className="rounded-2xl border border-dashed border-border bg-white/60 px-6 py-12 text-center">
       <p className="font-display text-2xl text-ink">Your personal baseline</p>
@@ -165,9 +199,20 @@ export function SignInPrompt({ onSignIn }: { onSignIn: () => void }) {
         Sign in to save health logs, voice journals, and stress signals under your own profile.
         Data is stored locally in your browser — not on our servers.
       </p>
-      <button type="button" className="btn-primary mt-6" onClick={onSignIn}>
-        Sign in to track
-      </button>
+      <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+        <button type="button" className="btn-primary" onClick={onSignIn}>
+          Sign in to track
+        </button>
+        {onDemo ? (
+          <button
+            type="button"
+            className="rounded-full border border-border px-5 py-2.5 text-sm text-muted transition hover:text-ink"
+            onClick={onDemo}
+          >
+            Try demo account
+          </button>
+        ) : null}
+      </div>
     </div>
   )
 }

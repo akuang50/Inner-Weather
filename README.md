@@ -26,6 +26,8 @@ Open the printed localhost URL. GitHub Pages deploys this Vite build to:
 
 Sign in or register on the site to get **per-user** health logs and journals. Credentials and tracker data are stored **only in your browser** (localStorage), keyed by account — suitable for demos, not production auth.
 
+**Demo account:** `demo@innerweather.app` / `demo12345` — or use **Continue as demo** / **Try demo account** in the UI.
+
 The Expo app under `app/` remains for the mobile prototype.
 
 ## Demo path (2–3 min)

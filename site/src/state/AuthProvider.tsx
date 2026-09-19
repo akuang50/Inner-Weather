@@ -8,8 +8,10 @@ import {
   type ReactNode,
 } from 'react'
 import {
+  ensureDemoAccount,
   getSession,
   loginAccount,
+  loginDemoAccount,
   logoutAccount,
   registerAccount,
   type AuthUser,
@@ -25,6 +27,7 @@ type AuthContextValue = {
     displayName?: string,
   ) => Promise<string | null>
   logout: () => void
+  loginDemo: () => Promise<string | null>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -34,8 +37,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
 
   useEffect(() => {
-    setUser(getSession())
-    setReady(true)
+    void ensureDemoAccount().finally(() => {
+      setUser(getSession())
+      setReady(true)
+    })
   }, [])
 
   const login = useCallback(async (email: string, password: string) => {
@@ -60,9 +65,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [])
 
+  const loginDemo = useCallback(async () => {
+    const result = await loginDemoAccount()
+    if ('error' in result) return result.error
+    setUser(result.user)
+    return null
+  }, [])
+
   const value = useMemo(
-    () => ({ ready, user, login, register, logout }),
-    [ready, user, login, register, logout],
+    () => ({ ready, user, login, register, logout, loginDemo }),
+    [ready, user, login, register, logout, loginDemo],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
