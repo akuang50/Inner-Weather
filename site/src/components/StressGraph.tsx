@@ -10,9 +10,15 @@ export function StressGraph({ onExplore }: { onExplore?: () => void }) {
 
   const width = 520
   const height = 220
-  const { d, coords, spike } = useMemo(() => {
-    const pts = daySeries.map((s, i) => ({ x: i, y: s.score }))
-    if (!pts.length) return { d: '', coords: [] as { x: number; y: number; score: number }[], spike: { x: 0, y: 0, score: 0 } }
+  const { d, area, coords, spike } = useMemo(() => {
+    const pts = daySeries.map((s: { score: number }, i: number) => ({ x: i, y: s.score }))
+    if (!pts.length)
+      return {
+        d: '',
+        area: '',
+        coords: [] as { x: number; y: number; score: number }[],
+        spike: { x: 0, y: 0, score: 0 },
+      }
     const maxX = Math.max(1, pts.length - 1)
     const minY = 20
     const maxY = 90
@@ -28,22 +34,29 @@ export function StressGraph({ onExplore }: { onExplore?: () => void }) {
       const cx = (prev.x + curr.x) / 2
       d += ` C ${cx} ${prev.y}, ${cx} ${curr.y}, ${curr.x} ${curr.y}`
     }
+    const last = coords[coords.length - 1]!
+    const first = coords[0]!
+    const area = `${d} L ${last.x} ${height} L ${first.x} ${height} Z`
     const spike = coords.reduce((a, b) => (b.score > a.score ? b : a))
-    return { d, coords, spike }
+    return { d, area, coords, spike }
   }, [daySeries])
 
   const spikeDay = daySeries.reduce((a, b) => (b.score > a.score ? b : a), daySeries[0]!)
 
   return (
-    <div className="relative overflow-hidden rounded-[28px] border border-border bg-white p-6 shadow-[0_20px_60px_rgba(21,23,26,0.04)] md:p-8">
+    <div className="surface relative overflow-hidden rounded-[32px] p-6 md:p-8">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-elevated/10 blur-2xl"
+      />
       <div className="mb-6 flex items-end justify-between gap-4">
         <div>
           <Eyebrow>Your stress signal</Eyebrow>
-          <p className="mt-2 text-3xl font-semibold tracking-tight text-ink md:text-4xl">
+          <p className="font-display mt-2 text-5xl tracking-tight text-ink md:text-6xl">
             {stressScore}
           </p>
         </div>
-        <p className="max-w-[180px] text-right text-sm text-muted">
+        <p className="max-w-[180px] text-right text-sm leading-relaxed text-muted">
           Live from your baseline + journals{coOccurrence ? ' · co-occurrence' : ''}.
         </p>
       </div>
@@ -55,17 +68,33 @@ export function StressGraph({ onExplore }: { onExplore?: () => void }) {
           role="img"
           aria-label="Live stress signal chart from your tracked data"
         >
+          <defs>
+            <linearGradient id="signalFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#FF6B6B" stopOpacity="0.22" />
+              <stop offset="100%" stopColor="#FF6B6B" stopOpacity="0" />
+            </linearGradient>
+          </defs>
           {[20, 40, 60, 80].map((tick) => {
             const y = height - ((tick - 20) / 70) * height
             return (
               <g key={tick}>
                 <line x1="0" x2={width} y1={y} y2={y} stroke="rgba(21,23,26,0.06)" strokeWidth="1" />
-                <text x="0" y={y - 6} fill="#73777D" fontSize="11" fontFamily="Inter, sans-serif">
+                <text x="0" y={y - 6} fill="#73777D" fontSize="11" fontFamily="DM Sans, sans-serif">
                   {tick}
                 </text>
               </g>
             )
           })}
+
+          {area && (
+            <motion.path
+              d={area}
+              fill="url(#signalFill)"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1.2, delay: reduce ? 0 : 0.4 }}
+            />
+          )}
 
           {d && (
             <motion.path
@@ -85,7 +114,7 @@ export function StressGraph({ onExplore }: { onExplore?: () => void }) {
               key={i}
               cx={c.x}
               cy={c.y}
-              r={c === spike ? 6 : 3.5}
+              r={c === spike ? 7 : 3.5}
               fill={c === spike ? '#FF6B6B' : '#15171A'}
               initial={{ opacity: 0, scale: 0.4 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -127,12 +156,12 @@ export function StressGraph({ onExplore }: { onExplore?: () => void }) {
           initial={reduce ? false : { opacity: 0, y: 12, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.45, ease: 'easeOut' }}
-          className="mt-6 rounded-2xl border border-border bg-bg p-5"
+          className="mt-6 rounded-2xl border border-border bg-bg/80 p-5 backdrop-blur"
         >
           <p className="text-[11px] font-semibold tracking-[0.16em] text-muted uppercase">
             {spikeDay.dayLabel} · signal {spikeDay.score}
           </p>
-          <p className="mt-2 text-lg font-semibold tracking-tight">
+          <p className="font-display mt-2 text-2xl tracking-tight">
             {spikeDay.coOccurrence ? 'Stress signals elevated' : 'Signals shifting'}
           </p>
           <div className="mt-4 grid grid-cols-3 gap-3 text-sm">

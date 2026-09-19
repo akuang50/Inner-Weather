@@ -23,13 +23,16 @@ export function Navbar() {
       <nav
         className={`pointer-events-auto flex w-full max-w-5xl items-center justify-between rounded-full border px-4 py-2.5 transition-all duration-300 md:px-5 ${
           scrolled
-            ? 'border-border bg-bg/80 shadow-[0_8px_30px_rgba(21,23,26,0.06)] backdrop-blur-xl'
-            : 'border-transparent bg-bg/40 backdrop-blur-md'
+            ? 'border-border bg-white/75 shadow-[0_12px_40px_rgba(21,23,26,0.08)] backdrop-blur-xl'
+            : 'border-white/40 bg-white/35 backdrop-blur-md'
         }`}
       >
         <a href="#top" className="flex items-center gap-2.5">
-          <span className="inline-flex h-2.5 w-2.5 rounded-full bg-elevated" aria-hidden />
-          <span className="text-sm font-semibold tracking-tight text-ink">Stress Monitor</span>
+          <span className="relative inline-flex h-2.5 w-2.5">
+            <span className="absolute inset-0 animate-ping rounded-full bg-elevated/40" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-elevated" />
+          </span>
+          <span className="font-display text-lg tracking-tight text-ink">Stress Monitor</span>
         </a>
         <div className="hidden items-center gap-7 md:flex">
           {links.map((l) => (
@@ -41,15 +44,12 @@ export function Navbar() {
               {l.label}
             </a>
           ))}
-          <span className="text-xs text-muted tabular-nums">
+          <span className="rounded-full bg-bg px-2.5 py-1 text-xs text-muted tabular-nums">
             signal {stressScore}
             {realEntryCount > 0 ? ` · ${realEntryCount} live` : ''}
           </span>
         </div>
-        <a
-          href="#voice"
-          className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
-        >
+        <a href="#voice" className="btn-primary !px-4 !py-2 text-sm">
           Talk now
         </a>
       </nav>

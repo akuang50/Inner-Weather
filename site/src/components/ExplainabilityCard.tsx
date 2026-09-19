@@ -31,7 +31,7 @@ export function ExplainabilityCard() {
     <Section id="explain" className="py-24 md:py-32">
       <Reveal>
         <Eyebrow>Explainability</Eyebrow>
-        <h2 className="mt-4 max-w-xl text-4xl font-semibold tracking-tight md:text-5xl">
+        <h2 className="font-display mt-4 max-w-xl text-4xl tracking-tight md:text-5xl">
           No black box.
         </h2>
         <p className="mt-3 text-muted md:text-lg">Every insight tells you why it appeared.</p>
@@ -39,7 +39,7 @@ export function ExplainabilityCard() {
 
       <Reveal
         delay={0.1}
-        className="mt-12 rounded-[28px] border border-border bg-white p-6 shadow-[0_24px_80px_rgba(21,23,26,0.05)] md:p-10"
+        className="mt-12 surface-solid rounded-[28px] p-6 shadow-[0_24px_80px_rgba(21,23,26,0.05)] md:p-10"
       >
         <p className="text-2xl font-semibold tracking-tight md:text-3xl">
           {coOccurrence

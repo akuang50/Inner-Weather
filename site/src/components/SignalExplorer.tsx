@@ -25,7 +25,7 @@ export function SignalExplorer() {
     <Section id="signals" className="py-24 md:py-32">
       <Reveal>
         <Eyebrow>Something changed · live signals</Eyebrow>
-        <h2 className="mt-4 max-w-xl text-4xl font-semibold tracking-tight md:text-5xl">
+        <h2 className="font-display mt-4 max-w-xl text-4xl tracking-tight md:text-5xl">
           Stress isn’t one signal.
         </h2>
         <p className="mt-3 text-2xl text-muted md:text-3xl">It’s a pattern.</p>
@@ -65,7 +65,7 @@ export function SignalExplorer() {
         })}
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-[28px] border border-border bg-white p-6 md:p-10">
+      <div className="mt-6 overflow-hidden surface-solid rounded-[28px] p-6 md:p-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={active}

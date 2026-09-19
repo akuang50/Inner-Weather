@@ -21,7 +21,7 @@ export function StressReplay() {
     <Section id="replay" className="py-24 md:py-32">
       <Reveal>
         <Eyebrow>Stress Replay · your timeline</Eyebrow>
-        <h2 className="mt-4 max-w-xl text-4xl font-semibold tracking-tight md:text-5xl">
+        <h2 className="font-display mt-4 max-w-xl text-4xl tracking-tight md:text-5xl">
           See your week differently.
         </h2>
         <p className="mt-3 max-w-md text-muted">
@@ -75,7 +75,7 @@ export function StressReplay() {
           key={point.date}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-[28px] border border-border bg-white p-6 md:p-10"
+          className="surface-solid rounded-[28px] p-6 md:p-10"
         >
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>

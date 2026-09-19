@@ -8,7 +8,7 @@ export function BaselineSection() {
     <Section className="py-24 md:py-32">
       <Reveal>
         <Eyebrow>Personal baseline · computed</Eyebrow>
-        <h2 className="mt-4 max-w-xl text-4xl font-semibold tracking-tight md:text-5xl">
+        <h2 className="font-display mt-4 max-w-xl text-4xl tracking-tight md:text-5xl">
           Normal is personal.
         </h2>
         <p className="mt-3 max-w-lg text-muted md:text-lg">
@@ -33,7 +33,7 @@ export function BaselineSection() {
       </div>
       <p className="mt-4 text-sm text-muted">Different people. Different baselines.</p>
 
-      <Reveal delay={0.12} className="mt-10 rounded-[28px] border border-border bg-white p-6 md:p-10">
+      <Reveal delay={0.12} className="mt-10 surface-solid rounded-[28px] p-6 md:p-10">
         <Eyebrow>Your baseline</Eyebrow>
         <div className="mt-6 grid gap-6 sm:grid-cols-3">
           <Stat label="Sleep" value={baseline.sleepLabel} />
@@ -54,7 +54,7 @@ export function BaselineSection() {
 
 function BaselineCard({ title, path }: { title: string; path: string }) {
   return (
-    <div className="rounded-[24px] border border-border bg-white p-6">
+    <div className="surface-solid rounded-[24px] p-6">
       <p className="text-sm font-medium text-muted">{title}</p>
       <svg viewBox="0 0 320 70" className="mt-6 h-16 w-full" aria-hidden>
         <path d={path} fill="none" stroke="#15171A" strokeWidth="2" strokeLinecap="round" />

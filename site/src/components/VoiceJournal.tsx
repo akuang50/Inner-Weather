@@ -110,10 +110,10 @@ export function VoiceJournal() {
     <Section id="voice" dark className="py-24 md:py-32">
       <Reveal>
         <Eyebrow light>Voice rant · live</Eyebrow>
-        <h2 className="mt-4 max-w-xl text-4xl font-semibold tracking-tight md:text-6xl">
+        <h2 className="font-display mt-4 max-w-xl text-4xl tracking-tight md:text-6xl">
           Don’t journal.
           <br />
-          Just talk.
+          <span className="italic text-white/70">Just talk.</span>
         </h2>
         <p className="mt-4 max-w-md text-base text-white/60 md:text-lg">
           Browser speech-to-text captures your words.
@@ -149,7 +149,7 @@ export function VoiceJournal() {
               else if (state === 'idle' || state === 'result' || state === 'action') start()
             }}
             aria-label="Hold to talk"
-            className="relative flex h-44 w-44 items-center justify-center rounded-full border border-white/15 bg-white/5 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+            className="relative flex h-48 w-48 items-center justify-center rounded-full border border-white/15 bg-gradient-to-b from-white/10 to-white/[0.03] shadow-[0_0_60px_rgba(255,107,107,0.12)] transition hover:from-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
           >
             {(state === 'listening' || state === 'processing') && !reduce && (
               <>

@@ -46,7 +46,7 @@ export function HealthLogger() {
     <Section id="track" className="py-20 md:py-28">
       <Reveal>
         <Eyebrow>Live tracking</Eyebrow>
-        <h2 className="mt-4 max-w-2xl text-4xl font-semibold tracking-tight md:text-5xl">
+        <h2 className="font-display mt-4 max-w-2xl text-4xl tracking-tight md:text-5xl">
           It tracks what it says it tracks.
         </h2>
         <p className="mt-3 max-w-xl text-muted md:text-lg">
@@ -57,7 +57,7 @@ export function HealthLogger() {
       </Reveal>
 
       <div className="mt-10 grid gap-6 lg:grid-cols-2">
-        <Reveal className="rounded-[28px] border border-border bg-white p-6 md:p-8">
+        <Reveal className="surface-solid rounded-[28px] p-6 md:p-8">
           <p className="text-[11px] font-semibold tracking-[0.16em] text-muted uppercase">
             Log today’s body signals
           </p>
@@ -84,7 +84,7 @@ export function HealthLogger() {
           </p>
         </Reveal>
 
-        <Reveal delay={0.08} className="rounded-[28px] border border-border bg-white p-6 md:p-8">
+        <Reveal delay={0.08} className="surface-solid rounded-[28px] p-6 md:p-8">
           <p className="text-[11px] font-semibold tracking-[0.16em] text-muted uppercase">
             What’s stored on this device
           </p>
@@ -120,7 +120,7 @@ export function HealthLogger() {
         </Reveal>
       </div>
 
-      <Reveal className="mt-6 rounded-[28px] border border-border bg-white p-6 md:p-8">
+      <Reveal className="mt-6 surface-solid rounded-[28px] p-6 md:p-8">
         <p className="text-[11px] font-semibold tracking-[0.16em] text-muted uppercase">
           Grok / xAI API
         </p>
