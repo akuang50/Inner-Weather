@@ -14,6 +14,8 @@ export type JournalEntry = {
   durationSec: number
   source: 'voice' | 'typed' | 'seed'
   analysis: LanguageAnalysis
+  reflection?: string
+  analysisSource?: 'grok' | 'local'
 }
 
 export type LanguageAnalysis = {

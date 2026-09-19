@@ -8,7 +8,7 @@ import { Eyebrow, Reveal, Section } from './ui'
 type VoiceState = 'idle' | 'listening' | 'processing' | 'result' | 'action'
 
 export function VoiceJournal() {
-  const { addJournal } = useTracker()
+  const { addJournal, grokEnabled } = useTracker()
   const [state, setState] = useState<VoiceState>('idle')
   const [transcript, setTranscript] = useState('')
   const [typed, setTyped] = useState('')
@@ -18,6 +18,8 @@ export function VoiceJournal() {
     { name: string; strength: number }[]
   >([])
   const [strongest, setStrongest] = useState('uncertainty')
+  const [reflection, setReflection] = useState('')
+  const [analysisSource, setAnalysisSource] = useState<'grok' | 'local'>('local')
   const reduce = useReducedMotion()
   const session = useRef<{ stop: () => void } | null>(null)
   const startedAt = useRef(0)
@@ -27,7 +29,7 @@ export function VoiceJournal() {
     return () => session.current?.stop()
   }, [])
 
-  const finishWithTranscript = (text: string, source: 'voice' | 'typed') => {
+  const finishWithTranscript = async (text: string, source: 'voice' | 'typed') => {
     const clean = text.trim()
     if (!clean) {
       setError('No speech captured — try again or type below.')
@@ -36,27 +38,37 @@ export function VoiceJournal() {
     }
     setState('processing')
     setTranscript(clean)
-    window.setTimeout(() => {
-      const entry = addJournal(clean, {
+    try {
+      const entry = await addJournal(clean, {
         source,
         durationSec: Math.max(3, Math.round((Date.now() - startedAt.current) / 1000)),
       })
       const a = entry.analysis
       setThemes(a.themes)
-      setAnalysisBars([
-        { name: 'Urgency', strength: a.urgency },
-        { name: 'Uncertainty', strength: a.uncertainty },
-        { name: 'Overwhelm', strength: a.overwhelm },
-        { name: 'Negativity', strength: a.negativity },
-      ].sort((x, y) => y.strength - x.strength).slice(0, 3))
-      const ranking = [
-        { name: 'urgency', v: a.urgency },
-        { name: 'uncertainty', v: a.uncertainty },
-        { name: 'overwhelm', v: a.overwhelm },
-      ].sort((x, y) => y.v - x.v)
-      setStrongest(ranking[0]?.name ?? 'uncertainty')
+      setAnalysisBars(
+        [
+          { name: 'Urgency', strength: a.urgency },
+          { name: 'Uncertainty', strength: a.uncertainty },
+          { name: 'Overwhelm', strength: a.overwhelm },
+          { name: 'Negativity', strength: a.negativity },
+        ]
+          .sort((x, y) => y.strength - x.strength)
+          .slice(0, 3),
+      )
+      setStrongest(
+        [
+          { name: 'urgency', v: a.urgency },
+          { name: 'uncertainty', v: a.uncertainty },
+          { name: 'overwhelm', v: a.overwhelm },
+        ].sort((x, y) => y.v - x.v)[0]?.name ?? 'uncertainty',
+      )
+      setReflection(entry.reflection ?? '')
+      setAnalysisSource(entry.analysisSource ?? 'local')
       setState('result')
-    }, 700)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Analysis failed')
+      setState('idle')
+    }
   }
 
   const start = () => {
@@ -90,7 +102,7 @@ export function VoiceJournal() {
     session.current = null
     // small delay for final results
     window.setTimeout(() => {
-      finishWithTranscript(transcript || typed, 'voice')
+      void finishWithTranscript(transcript || typed, 'voice')
     }, 350)
   }
 
@@ -104,8 +116,13 @@ export function VoiceJournal() {
           Just talk.
         </h2>
         <p className="mt-4 max-w-md text-base text-white/60 md:text-lg">
-          Real speech-to-text when your browser allows it. We extract language signals from{' '}
-          <span className="text-white/90">what you actually said</span> and store the entry locally.
+          Browser speech-to-text captures your words.
+          {grokEnabled
+            ? ' Grok analyzes the transcript for themes and language signals.'
+            : ' Add an xAI API key in Track to analyze with Grok (local heuristics until then).'}
+        </p>
+        <p className="mt-2 text-xs text-white/35">
+          Analyzer: {grokEnabled ? 'Grok (xAI)' : 'local fallback'} · mic still uses Web Speech API
         </p>
       </Reveal>
 
@@ -153,7 +170,8 @@ export function VoiceJournal() {
           <p className="mt-6 text-sm text-white/55">
             {state === 'idle' && (supportsSpeech ? 'Hold to rant' : 'Type below to track')}
             {state === 'listening' && 'Listening… release to analyze'}
-            {state === 'processing' && 'Extracting language signals…'}
+            {state === 'processing' &&
+              (grokEnabled ? 'Grok is reading your words…' : 'Extracting language signals…')}
             {state === 'result' && 'I heard you — entry saved.'}
             {state === 'action' && 'A place to start'}
           </p>
@@ -190,7 +208,7 @@ export function VoiceJournal() {
             disabled={typed.trim().length < 3 || state === 'listening' || state === 'processing'}
             onClick={() => {
               startedAt.current = Date.now()
-              finishWithTranscript(typed, 'typed')
+              void finishWithTranscript(typed, 'typed')
               setTyped('')
             }}
             className="mt-3 rounded-full border border-white/15 px-4 py-2 text-sm text-white disabled:opacity-40"
@@ -251,7 +269,9 @@ export function VoiceJournal() {
 
               <p className="text-white/65">
                 The strongest shift in this entry is{' '}
-                <span className="text-white">{strongest}</span>. It’s saved to your local timeline.
+                <span className="text-white">{strongest}</span>
+                {analysisSource === 'grok' ? ' (via Grok)' : ' (local analyzer)'}. It’s saved to your
+                local timeline.
               </p>
 
               {state === 'result' && (
@@ -271,14 +291,12 @@ export function VoiceJournal() {
                   className="rounded-[24px] border border-ai/30 bg-ai/10 p-6"
                 >
                   <p className="text-lg leading-relaxed">
-                    {strongest === 'uncertainty'
-                      ? "You don’t seem stuck on everything — you seem stuck on where to start."
-                      : strongest === 'urgency'
-                        ? 'There’s a lot of urgency here. Name the single next action that would lower the pressure.'
-                        : 'There’s a lot of weight in this. Shrink it to one finishable step.'}
-                  </p>
-                  <p className="mt-4 text-white/65">
-                    Want to turn it into three concrete next steps?
+                    {reflection ||
+                      (strongest === 'uncertainty'
+                        ? "You don’t seem stuck on everything — you seem stuck on where to start."
+                        : strongest === 'urgency'
+                          ? 'There’s a lot of urgency here. Name the single next action that would lower the pressure.'
+                          : 'There’s a lot of weight in this. Shrink it to one finishable step.')}
                   </p>
                   <a
                     href="#replay"

@@ -1,15 +1,28 @@
 import { useState } from 'react'
+import { clearXaiApiKey, getXaiApiKey, setXaiApiKey } from '../lib/grok'
 import { useTracker, useSleepLabel } from '../state/TrackerProvider'
 import { Eyebrow, Reveal, Section } from './ui'
 
 export function HealthLogger() {
-  const { body, logHealth, realEntryCount, resetToSeed, clearAll, journals, healthLogs } = useTracker()
+  const {
+    body,
+    logHealth,
+    realEntryCount,
+    resetToSeed,
+    clearAll,
+    journals,
+    healthLogs,
+    grokEnabled,
+    refreshGrokFlag,
+  } = useTracker()
   const current = body.current
   const latestSleep = useSleepLabel(current?.sleepHours)
   const [sleep, setSleep] = useState(String(current?.sleepHours ?? 6.5))
   const [hr, setHr] = useState(String(current?.restingHr ?? 64))
   const [steps, setSteps] = useState(String(current?.steps ?? 5000))
   const [saved, setSaved] = useState(false)
+  const [apiKey, setApiKey] = useState(() => getXaiApiKey() ?? '')
+  const [keySaved, setKeySaved] = useState(false)
 
   const save = () => {
     logHealth({
@@ -19,6 +32,14 @@ export function HealthLogger() {
     })
     setSaved(true)
     window.setTimeout(() => setSaved(false), 1800)
+  }
+
+  const saveKey = () => {
+    if (apiKey.trim()) setXaiApiKey(apiKey)
+    else clearXaiApiKey()
+    refreshGrokFlag()
+    setKeySaved(true)
+    window.setTimeout(() => setKeySaved(false), 1800)
   }
 
   return (
@@ -93,11 +114,65 @@ export function HealthLogger() {
             </button>
           </div>
           <p className="mt-4 text-xs leading-relaxed text-muted">
-            Voice rants use the Web Speech API when available. Language features are extracted from
-            the transcript you actually produce.
+            Mic → Web Speech API. Language understanding →{' '}
+            {grokEnabled ? 'Grok (xAI)' : 'local heuristics until you add a key'}.
           </p>
         </Reveal>
       </div>
+
+      <Reveal className="mt-6 rounded-[28px] border border-border bg-white p-6 md:p-8">
+        <p className="text-[11px] font-semibold tracking-[0.16em] text-muted uppercase">
+          Grok / xAI API
+        </p>
+        <p className="mt-2 max-w-2xl text-sm text-muted">
+          Paste your xAI API key to analyze rants with Grok. Stored only in this browser’s
+          localStorage (not committed). Get a key at{' '}
+          <a
+            className="underline underline-offset-2"
+            href="https://console.x.ai/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            console.x.ai
+          </a>
+          . Or set <code className="text-ink">VITE_XAI_API_KEY</code> in <code className="text-ink">site/.env</code>.
+        </p>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <input
+            type="password"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="xai-..."
+            className="w-full flex-1 rounded-xl border border-border bg-bg px-3 py-2.5 text-sm outline-none focus:border-ink/30"
+            autoComplete="off"
+          />
+          <button
+            type="button"
+            onClick={saveKey}
+            className="rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-white"
+          >
+            Save key
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              clearXaiApiKey()
+              setApiKey('')
+              refreshGrokFlag()
+            }}
+            className="rounded-full border border-border px-4 py-2.5 text-sm"
+          >
+            Clear
+          </button>
+        </div>
+        <p className="mt-3 text-sm">
+          Status:{' '}
+          <span className={grokEnabled ? 'font-medium text-calm' : 'text-muted'}>
+            {grokEnabled ? 'Grok connected' : 'Using local analyzer'}
+          </span>
+          {keySaved && <span className="ml-2 text-calm">Saved.</span>}
+        </p>
+      </Reveal>
     </Section>
   )
 }

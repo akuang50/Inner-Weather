@@ -15,7 +15,7 @@ import {
   languageDeviation,
   sleepLabel,
 } from '../lib/baseline'
-import { analyzeLanguage } from '../lib/language'
+import { analyzeWithGrok, grokConfigured } from '../lib/grok'
 import { clearTracker, loadTracker, saveTracker, seedTracker } from '../lib/storage'
 import type { HealthLog, JournalEntry } from '../lib/types'
 
@@ -30,10 +30,15 @@ type TrackerContextValue = {
   stressScore: number
   coOccurrence: boolean
   realEntryCount: number
-  addJournal: (transcript: string, opts?: { source?: 'voice' | 'typed'; durationSec?: number }) => JournalEntry
+  grokEnabled: boolean
+  addJournal: (
+    transcript: string,
+    opts?: { source?: 'voice' | 'typed'; durationSec?: number },
+  ) => Promise<JournalEntry>
   logHealth: (input: { sleepHours: number; restingHr: number; steps: number }) => void
   resetToSeed: () => void
   clearAll: () => void
+  refreshGrokFlag: () => void
 }
 
 const TrackerContext = createContext<TrackerContextValue | null>(null)
@@ -42,11 +47,13 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false)
   const [healthLogs, setHealthLogs] = useState<HealthLog[]>([])
   const [journals, setJournals] = useState<JournalEntry[]>([])
+  const [grokEnabled, setGrokEnabled] = useState(false)
 
   useEffect(() => {
     const state = loadTracker()
     setHealthLogs(state.healthLogs)
     setJournals(state.journals)
+    setGrokEnabled(grokConfigured())
     setReady(true)
   }, [])
 
@@ -65,21 +72,30 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
     journals.filter((j) => j.source !== 'seed').length +
     healthLogs.filter((h) => h.source !== 'seed').length
 
+  const refreshGrokFlag = useCallback(() => setGrokEnabled(grokConfigured()), [])
+
   const addJournal = useCallback(
-    (transcript: string, opts?: { source?: 'voice' | 'typed'; durationSec?: number }) => {
-      const analysis = analyzeLanguage(transcript)
+    async (transcript: string, opts?: { source?: 'voice' | 'typed'; durationSec?: number }) => {
+      const bodySummary = body.current
+        ? `sleep ${body.current.sleepHours}h (${body.deltas.sleepPct}% vs baseline), RHR ${body.current.restingHr} (${body.deltas.restingHeartRatePct}%), steps ${body.current.steps} (${body.deltas.activityPct}%)`
+        : undefined
+      const recentTopics = language.current.topics.map((t) => t.name)
+
+      const grok = await analyzeWithGrok(transcript, { recentTopics, bodySummary })
       const entry: JournalEntry = {
         id: `j-${Date.now()}`,
         timestamp: new Date().toISOString(),
         transcript: transcript.trim(),
         durationSec: opts?.durationSec ?? Math.max(5, Math.round(transcript.split(/\s+/).length / 2)),
         source: opts?.source ?? 'typed',
-        analysis,
+        analysis: grok.analysis,
+        reflection: grok.reflection,
+        analysisSource: grok.source,
       }
       setJournals((prev) => [...prev, entry])
       return entry
     },
-    [],
+    [body, language.current.topics],
   )
 
   const logHealth = useCallback((input: { sleepHours: number; restingHr: number; steps: number }) => {
@@ -123,10 +139,12 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
     stressScore,
     coOccurrence,
     realEntryCount,
+    grokEnabled,
     addJournal,
     logHealth,
     resetToSeed,
     clearAll,
+    refreshGrokFlag,
   }
 
   return <TrackerContext.Provider value={value}>{children}</TrackerContext.Provider>
