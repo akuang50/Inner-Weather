@@ -1,107 +1,72 @@
 import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BarRow, Button, SectionLabel, Sparkline } from '../src/components/ui';
+import { FusionDiagram } from '../src/components/FusionDiagram';
+import { Button } from '../src/components/ui';
+import { demoHealthSignals } from '../src/data/demoDataset';
+import { buildDaySeries } from '../src/engine/daySeries';
 import { useApp } from '../src/state/AppContext';
 import { colors, spacing, stressWarmth } from '../src/theme';
 
-function greeting(): string {
-  const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 18) return 'Good afternoon';
-  return 'Good evening';
-}
-
 export default function HomeScreen() {
-  const { preferences, snapshot } = useApp();
+  const { preferences, snapshot, journals, analyses } = useApp();
   const router = useRouter();
   const bg = stressWarmth(snapshot.score);
 
-  const sleep = snapshot.metricDeviations.find((d) => d.metric === 'sleep_hours');
-  const rhr = snapshot.metricDeviations.find((d) => d.metric === 'resting_hr');
-
-  const related = useMemo(() => {
-    if (!snapshot.primaryTheme) return null;
-    const mentions = snapshot.contributingFactors.find((c) => c.includes('mentioned'));
-    return { theme: snapshot.primaryTheme, mentions };
-  }, [snapshot]);
+  const series = useMemo(
+    () => buildDaySeries(demoHealthSignals, journals, analyses, 7),
+    [journals, analyses],
+  );
+  const today = series[series.length - 1];
+  const linked = today?.coOccurrence ?? false;
 
   return (
-    <LinearGradient colors={[bg, '#F7F8FA']} style={styles.fill}>
+    <LinearGradient colors={[bg, '#F7F8FA', '#EEF2F4']} style={styles.fill}>
       <SafeAreaView style={styles.fill}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <Text style={styles.brand}>Inner Weather</Text>
           <Text style={styles.hello}>
-            {greeting()}, {preferences.name}.
+            {preferences.name}, something in you shifted.
+          </Text>
+          <Text style={styles.lede}>
+            Not vs other people — vs <Text style={styles.em}>your</Text> baseline. Body and
+            language moved together.
           </Text>
 
-          <SectionLabel>Your signals</SectionLabel>
-          <View style={styles.scoreBlock}>
-            <Text style={styles.score}>{snapshot.score}</Text>
-            <View style={styles.scoreMeta}>
-              <Text style={styles.elevated}>Elevated today</Text>
-              <Text style={styles.delta}>
-                ↑ {Math.abs(snapshot.change)}% from your recent baseline
-              </Text>
-            </View>
-          </View>
-
-          <SectionLabel>What changed?</SectionLabel>
-          {sleep && (
-            <BarRow
-              label="Sleep"
-              pct={sleep.changePct}
-              tone={sleep.changePct < 0 ? 'up' : 'down'}
-            />
-          )}
-          {rhr && (
-            <BarRow
-              label="Resting heart rate"
-              pct={rhr.changePct}
-              tone={rhr.changePct > 0 ? 'up' : 'down'}
-            />
-          )}
-          <BarRow
-            label="Language signals"
-            pct={Math.max(8, snapshot.languageChangePct)}
-            tone="up"
+          <FusionDiagram
+            body={today?.bodyScore ?? snapshot.physiologicalSignal}
+            language={today?.languageScore ?? snapshot.languageSignal}
+            context={today?.contextScore ?? snapshot.contextSignal}
+            linked={linked}
           />
 
-          <SectionLabel>What might be related?</SectionLabel>
-          <View style={styles.related}>
-            <Text style={styles.relatedTitle}>
-              {related?.theme
-                ? related.theme.charAt(0).toUpperCase() + related.theme.slice(1)
-                : 'Rising pressure'}
+          <Text style={styles.fusionLine}>
+            {today?.narrative.fusion ?? snapshot.uncertainty}
+          </Text>
+
+          <Pressable style={styles.primaryHit} onPress={() => router.push('/fuse')}>
+            <Text style={styles.primaryHitLabel}>Watch the signals fuse</Text>
+            <Text style={styles.primaryHitSub}>
+              Type what’s on your mind — see body + words connect live
             </Text>
-            <Text style={styles.relatedBody}>
-              {related?.mentions ??
-                'Several of your recent entries echo the same pressure points.'}
-            </Text>
-            <Text style={styles.disclaimer}>{snapshot.uncertainty}</Text>
+          </Pressable>
+
+          <View style={styles.rowActions}>
+            <Button
+              label="Tell me what’s going on"
+              onPress={() => router.push('/rant')}
+              style={{ flex: 1 }}
+            />
           </View>
+          <Button label="Scrub the week" variant="soft" onPress={() => router.push('/replay')} />
+          <Button label="Why this isn’t a diagnosis" variant="ghost" onPress={() => router.push('/why')} />
 
-          <Button
-            label="Tell me what’s going on"
-            onPress={() => router.push('/rant')}
-            style={{ marginTop: spacing.md }}
-          />
-          <Button
-            label="Why am I seeing this?"
-            variant="ghost"
-            onPress={() => router.push('/why')}
-          />
-
-          <SectionLabel>Your week</SectionLabel>
-          <Sparkline values={snapshot.weekScores} />
-
-          <Button
-            label="Explore stress replay"
-            variant="soft"
-            onPress={() => router.push('/replay')}
-            style={{ marginTop: spacing.lg }}
-          />
+          <Text style={styles.scoreFoot}>
+            Stress signal {snapshot.score} · baseline ~{snapshot.baselineScore} · confidence{' '}
+            {Math.round(snapshot.confidence * 100)}%
+          </Text>
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -115,60 +80,66 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.xxl,
   },
-  hello: {
-    fontFamily: 'Fraunces_500Medium',
-    fontSize: 28,
-    color: colors.primary,
-    marginBottom: spacing.xl,
-  },
-  scoreBlock: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  score: {
+  brand: {
     fontFamily: 'Fraunces_600SemiBold',
-    fontSize: 88,
-    lineHeight: 92,
+    fontSize: 18,
+    letterSpacing: -0.3,
     color: colors.primary,
-    letterSpacing: -3,
+    marginBottom: spacing.lg,
   },
-  scoreMeta: {
-    paddingBottom: 14,
-    gap: 4,
+  hello: {
+    fontFamily: 'Fraunces_600SemiBold',
+    fontSize: 36,
+    lineHeight: 42,
+    letterSpacing: -0.8,
+    color: colors.primary,
+    marginBottom: spacing.sm,
   },
-  elevated: {
+  lede: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
+    lineHeight: 26,
+    color: 'rgba(21,23,26,0.72)',
+    marginBottom: spacing.sm,
+    maxWidth: 420,
+  },
+  em: {
     fontFamily: 'DMSans_600SemiBold',
-    fontSize: 16,
-    color: colors.stress,
+    color: colors.primary,
   },
-  delta: {
+  fusionLine: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 14,
+    lineHeight: 22,
     color: colors.muted,
-    maxWidth: 160,
+    marginBottom: spacing.lg,
   },
-  related: {
+  primaryHit: {
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    borderRadius: 22,
+    backgroundColor: colors.primary,
     marginBottom: spacing.md,
-    gap: 8,
   },
-  relatedTitle: {
+  primaryHitLabel: {
     fontFamily: 'Fraunces_600SemiBold',
-    fontSize: 26,
-    color: colors.primary,
+    fontSize: 22,
+    color: colors.white,
+    marginBottom: 6,
   },
-  relatedBody: {
+  primaryHitSub: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    lineHeight: 24,
-    color: 'rgba(21,23,26,0.75)',
-  },
-  disclaimer: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     lineHeight: 20,
+    color: 'rgba(255,255,255,0.72)',
+  },
+  rowActions: {
+    marginBottom: spacing.sm,
+  },
+  scoreFoot: {
+    marginTop: spacing.xl,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     color: colors.muted,
-    marginTop: 4,
   },
 });

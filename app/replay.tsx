@@ -2,90 +2,83 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, SectionLabel } from '../src/components/ui';
+import { FusionDiagram } from '../src/components/FusionDiagram';
+import { Button } from '../src/components/ui';
+import { demoHealthSignals } from '../src/data/demoDataset';
+import { buildDaySeries } from '../src/engine/daySeries';
 import { useApp } from '../src/state/AppContext';
 import { colors, spacing } from '../src/theme';
 
-const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-
 export default function ReplayScreen() {
-  const { snapshot } = useApp();
+  const { journals, analyses } = useApp();
   const router = useRouter();
-  const points = useMemo(
-    () =>
-      snapshot.weekScores.map((score, i) => ({
-        day: DAYS[i] ?? `D${i}`,
-        score,
-        label: i === 1 ? 'poor sleep' : i === 4 ? 'deadline' : null,
-      })),
-    [snapshot.weekScores],
+  const series = useMemo(
+    () => buildDaySeries(demoHealthSignals, journals, analyses, 7),
+    [journals, analyses],
   );
-  const [selected, setSelected] = useState(points.length - 1);
+  const [selected, setSelected] = useState(Math.max(0, series.length - 1));
+  const point = series[selected];
 
-  const point = points[selected]!;
+  if (!point) {
+    return (
+      <SafeAreaView style={styles.fill}>
+        <Text style={{ padding: 24 }}>No series yet.</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.fill}>
       <ScrollView contentContainerStyle={styles.content}>
         <Button label="Back" variant="ghost" onPress={() => router.back()} />
         <Text style={styles.title}>Stress Replay</Text>
-        <Text style={styles.sub}>Scrub your week. Explore spikes without judgment.</Text>
+        <Text style={styles.sub}>
+          Scrub the week. Watch when body and language co-occur — that’s the anomaly.
+        </Text>
 
         <View style={styles.timeline}>
-          {points.map((p, i) => (
-            <Pressable key={p.day} onPress={() => setSelected(i)} style={styles.col}>
-              <Text style={[styles.day, i === selected && styles.dayOn]}>{p.day}</Text>
+          {series.map((p, i) => (
+            <Pressable key={p.date} onPress={() => setSelected(i)} style={styles.col}>
+              <Text style={[styles.day, i === selected && styles.dayOn]}>{p.label}</Text>
               <View style={styles.lineWrap}>
                 <View style={styles.line} />
                 <View
                   style={[
                     styles.dot,
-                    { top: 40 - (p.score / 100) * 36 },
+                    { top: 44 - (p.score / 100) * 40 },
                     i === selected && styles.dotOn,
+                    p.coOccurrence && styles.dotLink,
                   ]}
                 />
               </View>
-              {p.label && <Text style={styles.anno}>{p.label}</Text>}
+              {p.coOccurrence && <Text style={styles.anno}>linked</Text>}
             </Pressable>
           ))}
         </View>
 
-        <SectionLabel>Selected day</SectionLabel>
         <Text style={styles.scoreLine}>
-          Stress signal {point.score}
-          {point.label ? ` · ${point.label}` : ''}
+          {point.label} · signal {point.score}
+          {point.coOccurrence ? ' · co-occurrence' : ''}
         </Text>
 
-        <View style={styles.panels}>
-          <Panel
-            title="Body"
-            body={
-              selected >= 4
-                ? 'Sleep was about 18–21% below your baseline. Resting heart rate trended up.'
-                : 'Physiological signals stayed near your personal baseline.'
-            }
-          />
-          <Panel
-            title="Language"
-            body={
-              selected >= 3
-                ? 'You used significantly more urgency-related language.'
-                : 'Journal language looked relatively steady.'
-            }
-          />
-          <Panel
-            title="Context"
-            body={
-              selected >= 4
-                ? 'Your journal mentioned your project deadline repeatedly.'
-                : 'No strong recurring stressor theme yet.'
-            }
-          />
-          <Panel
-            title="AI"
-            body="These changes occurred together. The system cannot determine whether one caused another."
-          />
-        </View>
+        <FusionDiagram
+          body={point.bodyScore}
+          language={point.languageScore}
+          context={point.contextScore}
+          linked={point.coOccurrence}
+        />
+
+        <Panel title="Body" body={point.narrative.body} />
+        <Panel title="Language" body={point.narrative.language} />
+        <Panel title="Context" body={point.narrative.context} />
+        <Panel title="Fusion" body={point.narrative.fusion} />
+
+        {point.journalSnippet && (
+          <>
+            <Text style={styles.quoteLabel}>From that day</Text>
+            <Text style={styles.quote}>“{point.journalSnippet}”</Text>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -114,11 +107,12 @@ const styles = StyleSheet.create({
     color: colors.muted,
     marginBottom: spacing.xl,
     marginTop: 6,
+    lineHeight: 22,
   },
   timeline: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
     minHeight: 120,
   },
   col: { alignItems: 'center', flex: 1 },
@@ -152,24 +146,26 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   dotOn: {
+    backgroundColor: colors.primary,
+    transform: [{ scale: 1.15 }],
+  },
+  dotLink: {
     backgroundColor: colors.stress,
-    transform: [{ scale: 1.2 }],
   },
   anno: {
     marginTop: 8,
-    fontFamily: 'DMSans_400Regular',
+    fontFamily: 'DMSans_600SemiBold',
     fontSize: 10,
-    color: colors.muted,
+    color: colors.stress,
     textAlign: 'center',
   },
   scoreLine: {
     fontFamily: 'Fraunces_500Medium',
     fontSize: 22,
     color: colors.primary,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.sm,
   },
-  panels: { gap: spacing.md },
-  panel: { gap: 6 },
+  panel: { gap: 6, marginTop: spacing.md },
   panelTitle: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 12,
@@ -181,6 +177,21 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     lineHeight: 24,
+    color: colors.primary,
+  },
+  quoteLabel: {
+    marginTop: spacing.xl,
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 12,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    color: colors.muted,
+  },
+  quote: {
+    marginTop: 8,
+    fontFamily: 'Fraunces_500Medium',
+    fontSize: 18,
+    lineHeight: 28,
     color: colors.primary,
   },
 });

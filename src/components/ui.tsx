@@ -16,16 +16,18 @@ type Props = PressableProps & {
   style?: StyleProp<ViewStyle>;
 };
 
-export function Button({ label, variant = 'primary', style, ...rest }: Props) {
+export function Button({ label, variant = 'primary', style, disabled, ...rest }: Props) {
   return (
     <Pressable
       accessibilityRole="button"
+      disabled={disabled}
       style={({ pressed }) => [
         styles.base,
         variant === 'primary' && styles.primary,
         variant === 'ghost' && styles.ghost,
         variant === 'soft' && styles.soft,
-        pressed && styles.pressed,
+        pressed && !disabled && styles.pressed,
+        disabled && styles.disabled,
         style,
       ]}
       {...rest}
@@ -116,6 +118,9 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.85,
     transform: [{ scale: 0.98 }],
+  },
+  disabled: {
+    opacity: 0.4,
   },
   label: {
     color: colors.white,

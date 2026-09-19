@@ -10,27 +10,21 @@ import { colors, spacing } from '../src/theme';
 const STEPS = [
   {
     eyebrow: 'Inner Weather',
-    title: 'Meet Stress Monitor.',
-    body: 'Your body and your words can reveal patterns you don’t always notice.',
-    cta: 'Get Started',
+    title: 'Your body and your words share a weather system.',
+    body: 'Most apps show metrics or vibes. We detect when they drift from your personal baseline — together.',
+    cta: 'Show me',
   },
   {
-    eyebrow: 'Health',
-    title: 'Connect Apple Health',
-    body: 'Share sleep, resting heart rate, HRV, and activity so we can learn your personal baseline — not someone else’s.',
-    cta: 'Continue with demo data',
-  },
-  {
-    eyebrow: 'Baseline',
-    title: 'We’re learning what “normal” looks like for you.',
-    body: 'With demo data loaded, you’ll see how today’s signals compare to your recent weeks.',
+    eyebrow: 'Personal baseline',
+    title: 'Not vs other 21-year-olds. Vs you last week.',
+    body: 'Demo health data is loaded for Alex: sleep, resting HR, HRV, steps — normalized to a rolling personal baseline.',
     cta: 'Continue',
   },
   {
     eyebrow: 'Privacy',
-    title: 'Your data is yours.',
-    body: 'Journal entries stay private. You control health sharing. AI insights use only the signals you choose to provide. This is reflection — not diagnosis.',
-    cta: 'Enter Stress Monitor',
+    title: 'Reflection, not diagnosis.',
+    body: 'We explain co-occurrence with uncertainty. Your journals stay yours. This never claims medical causation.',
+    cta: 'Enter Inner Weather',
   },
 ] as const;
 
@@ -67,6 +61,15 @@ export default function OnboardingScreen() {
               ))}
             </View>
             <Button label={current.cta} onPress={advance} />
+            <Button
+              label="Skip to the fuse"
+              variant="ghost"
+              onPress={() => {
+                connectHealth();
+                completeOnboarding();
+                router.replace('/fuse');
+              }}
+            />
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -102,8 +105,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Fraunces_600SemiBold',
-    fontSize: 40,
-    lineHeight: 46,
+    fontSize: 36,
+    lineHeight: 42,
     color: colors.primary,
     letterSpacing: -0.8,
   },
@@ -112,10 +115,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 28,
     color: 'rgba(21,23,26,0.72)',
-    maxWidth: 340,
+    maxWidth: 360,
   },
   footer: {
-    gap: spacing.lg,
+    gap: spacing.md,
   },
   dots: {
     flexDirection: 'row',

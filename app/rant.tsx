@@ -1,37 +1,43 @@
-import React, { useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useRef, useState } from 'react';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { Audio } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FusionDiagram } from '../src/components/FusionDiagram';
 import { RantButton } from '../src/components/RantButton';
 import { Button } from '../src/components/ui';
+import { demoHealthSignals } from '../src/data/demoDataset';
+import { liveFusionPreview } from '../src/engine/daySeries';
+import { analyzeTranscriptLocally } from '../src/engine/stress';
 import { useApp } from '../src/state/AppContext';
 import { colors, spacing } from '../src/theme';
 
 const DEMO_TRANSCRIPT =
   "I'm honestly freaking out about this project. I keep saying I'll start and then I don't. I don't know where to begin and everything is piling up.";
 
-type Phase = 'idle' | 'recording' | 'processing';
+type Phase = 'idle' | 'recording' | 'processing' | 'linking';
 
 export default function RantScreen() {
   const [phase, setPhase] = useState<Phase>('idle');
-  const [error, setError] = useState<string | null>(null);
+  const [draft, setDraft] = useState('');
   const recordingRef = useRef<Audio.Recording | null>(null);
   const startedAt = useRef<number>(0);
   const router = useRouter();
-  const { addRant } = useApp();
+  const { addRant, analyses } = useApp();
+
+  const previewText = draft.trim() || (phase === 'processing' || phase === 'linking' ? DEMO_TRANSCRIPT : '');
+  const live = useMemo(
+    () => liveFusionPreview(demoHealthSignals, analyses, previewText, analyzeTranscriptLocally),
+    [analyses, previewText],
+  );
 
   const start = async () => {
-    setError(null);
     startedAt.current = Date.now();
     setPhase('recording');
     try {
       const permission = await Audio.requestPermissionsAsync();
-      if (!permission.granted) {
-        // Demo path without mic permission
-        return;
-      }
+      if (!permission.granted) return;
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
@@ -41,14 +47,23 @@ export default function RantScreen() {
       await recording.startAsync();
       recordingRef.current = recording;
     } catch {
-      // Keep UI in recording state; we'll use demo transcript on release.
+      // demo path
     }
+  };
+
+  const finishWith = async (transcript: string) => {
+    setPhase('processing');
+    await new Promise((r) => setTimeout(r, 700));
+    setPhase('linking');
+    setDraft(transcript);
+    await new Promise((r) => setTimeout(r, 1100));
+    const durationSec = Math.max(3, Math.round((Date.now() - startedAt.current) / 1000));
+    addRant(transcript, durationSec);
+    router.replace('/insight');
   };
 
   const stop = async () => {
     if (phase !== 'recording') return;
-    setPhase('processing');
-
     try {
       if (recordingRef.current) {
         await recordingRef.current.stopAndUnloadAsync();
@@ -57,13 +72,7 @@ export default function RantScreen() {
     } catch {
       // ignore
     }
-
-    // Prototype: local heuristic analysis with demo transcript.
-    // Swap for speech-to-text + LLM structured extraction later.
-    await new Promise((r) => setTimeout(r, 900));
-    const durationSec = Math.max(3, Math.round((Date.now() - startedAt.current) / 1000));
-    addRant(DEMO_TRANSCRIPT, durationSec);
-    router.replace('/insight');
+    await finishWith(draft.trim() || DEMO_TRANSCRIPT);
   };
 
   return (
@@ -71,15 +80,48 @@ export default function RantScreen() {
       <SafeAreaView style={styles.fill}>
         <View style={styles.top}>
           <Button label="Back" variant="ghost" onPress={() => router.back()} />
-          <Text style={styles.hint}>Hold to talk. Release when you’re done.</Text>
+          <Text style={styles.title}>Tell me what’s going on</Text>
+          <Text style={styles.hint}>
+            Hold to talk — or type. We’ll fuse it with today’s body deviations.
+          </Text>
         </View>
+
         <View style={styles.center}>
-          <RantButton phase={phase} onPressIn={start} onPressOut={stop} />
-          {error && <Text style={styles.error}>{error}</Text>}
+          {(phase === 'processing' || phase === 'linking' || draft.length > 8) && (
+            <FusionDiagram
+              body={live.bodyScore}
+              language={live.languageScore}
+              context={live.contextScore}
+              linked={live.coOccurrence && phase !== 'idle'}
+              compact
+            />
+          )}
+          <RantButton
+            phase={phase === 'linking' ? 'processing' : phase === 'idle' ? 'idle' : phase}
+            onPressIn={start}
+            onPressOut={stop}
+          />
         </View>
-        <Text style={styles.footnote}>
-          No forms. No mood sliders. Just what you’re carrying.
-        </Text>
+
+        <View style={styles.bottom}>
+          <TextInput
+            value={draft}
+            onChangeText={setDraft}
+            placeholder="Or type the rant…"
+            placeholderTextColor={colors.muted}
+            style={styles.input}
+            editable={phase === 'idle'}
+          />
+          <Button
+            label="Fuse this text"
+            variant="soft"
+            disabled={phase !== 'idle' || draft.trim().length < 4}
+            onPress={() => {
+              startedAt.current = Date.now();
+              void finishWith(draft.trim());
+            }}
+          />
+        </View>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -89,30 +131,41 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   top: {
     paddingHorizontal: spacing.md,
-    gap: spacing.sm,
+    gap: 6,
+  },
+  title: {
+    fontFamily: 'Fraunces_600SemiBold',
+    fontSize: 28,
+    color: colors.primary,
+    paddingHorizontal: spacing.sm,
   },
   hint: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     color: colors.muted,
     paddingHorizontal: spacing.sm,
+    marginBottom: spacing.sm,
   },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  error: {
-    marginTop: spacing.md,
-    color: colors.stress,
-    fontFamily: 'DMSans_400Regular',
-  },
-  footnote: {
-    textAlign: 'center',
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    color: colors.muted,
-    paddingBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
+  },
+  bottom: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
+    gap: spacing.sm,
+  },
+  input: {
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    color: colors.primary,
   },
 });

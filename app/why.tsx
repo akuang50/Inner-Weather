@@ -3,14 +3,22 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, SectionLabel } from '../src/components/ui';
+import { demoHealthSignals } from '../src/data/demoDataset';
+import { buildDaySeries } from '../src/engine/daySeries';
 import { useApp } from '../src/state/AppContext';
 import { colors, spacing } from '../src/theme';
 
 export default function WhyScreen() {
-  const { snapshot } = useApp();
+  const { snapshot, journals, analyses } = useApp();
   const router = useRouter();
+  const today = buildDaySeries(demoHealthSignals, journals, analyses, 7).at(-1);
 
-  const reasons = snapshot.contributingFactors.slice(0, 4);
+  const reasons = [
+    today?.narrative.body,
+    today?.narrative.language,
+    today?.narrative.context,
+    today?.narrative.fusion,
+  ].filter(Boolean) as string[];
 
   return (
     <SafeAreaView style={styles.fill}>
@@ -18,7 +26,7 @@ export default function WhyScreen() {
         <Button label="Close" variant="ghost" onPress={() => router.back()} />
         <SectionLabel>Why we noticed</SectionLabel>
         <Text style={styles.title}>
-          Your stress signals are elevated because several independent signals changed together.
+          Independent channels moved together against your personal baseline.
         </Text>
 
         <View style={styles.list}>
@@ -31,9 +39,11 @@ export default function WhyScreen() {
         </View>
 
         <Text style={styles.confidence}>
-          Confidence: {Math.round(snapshot.confidence * 100)}%
+          Confidence: {Math.round(snapshot.confidence * 100)}% · prototype fusion weights
         </Text>
-        <Text style={styles.note}>This is a pattern, not a diagnosis.</Text>
+        <Text style={styles.note}>
+          This is a pattern detector, not a diagnosis. Correlation is not causation.
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -77,5 +87,6 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     color: colors.muted,
+    lineHeight: 22,
   },
 });
