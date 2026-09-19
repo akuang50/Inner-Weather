@@ -46,7 +46,10 @@ export function buildDaySeries(
 
   const end = sleep[sleep.length - 1]!.timestamp;
   const endDate = new Date(`${end}T12:00:00`);
+  const analysisById = new Map(analyses.map((a) => [a.id, a]));
   const analysisByJournal = new Map(analyses.map((a) => [a.journalId, a]));
+  const analysisFor = (journal: JournalEntry) =>
+    analysisById.get(journal.analysisId ?? '') ?? analysisByJournal.get(journal.id);
 
   const slices: DaySlice[] = [];
 
@@ -62,8 +65,8 @@ export function buildDaySeries(
     const dayJournals = journals.filter((j) => j.timestamp.slice(0, 10) === date);
     const analysesToDate = journals
       .filter((j) => j.timestamp.slice(0, 10) <= date)
-      .map((j) => analysisByJournal.get(j.analysisId ?? '')!)
-      .filter(Boolean);
+      .map(analysisFor)
+      .filter((a): a is LanguageAnalysis => a != null);
     const lang = languageFeatures(analysesToDate);
 
     const languageScore = Math.min(
@@ -85,9 +88,7 @@ export function buildDaySeries(
     const coOccurrence = bodyHot && langHot;
 
     const snippet = dayJournals.at(-1)?.transcript ?? null;
-    const dayAnalysis = dayJournals
-      .map((j) => analysisByJournal.get(j.analysisId ?? ''))
-      .filter(Boolean);
+    const dayAnalysis = dayJournals.map(analysisFor).filter((a): a is LanguageAnalysis => a != null);
     const topics = [...new Set(dayAnalysis.flatMap((a) => a!.topics.map((t) => t.topic)))];
 
     slices.push({

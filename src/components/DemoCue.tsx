@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import { useApp } from '../state/AppContext';
 import { colors } from '../theme';
@@ -24,34 +24,28 @@ export function DemoCue() {
   if (!preferences.onboardingComplete || !next) return null;
 
   return (
-    <View style={styles.wrap} pointerEvents="box-none">
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => router.push(next.href)}
-        style={({ pressed }) => [styles.cue, pressed && styles.pressed]}
-      >
-        <Text style={styles.step}>{next.step}</Text>
-        <Text style={styles.label} numberOfLines={1}>
-          {next.label}
-        </Text>
-        <Text style={styles.arrow}>→</Text>
-      </Pressable>
-    </View>
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.push(next.href)}
+      style={({ pressed }) => [styles.cue, pressed && styles.pressed]}
+    >
+      <Text style={styles.step}>{next.step}</Text>
+      <Text style={styles.label} numberOfLines={1}>
+        {next.label}
+      </Text>
+      <Text style={styles.arrow}>→</Text>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
-    bottom: 14,
-    zIndex: 20,
-  },
   cue: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    marginTop: 4,
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderRadius: 999,

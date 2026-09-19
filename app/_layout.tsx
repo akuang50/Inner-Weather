@@ -37,13 +37,15 @@ export default function RootLayout() {
         <StatusBar style="dark" />
         <WebShell>
           <View style={{ flex: 1 }}>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: colors.background },
-                animation: Platform.OS === 'web' ? 'none' : 'fade',
-              }}
-            />
+            <View style={{ flex: 1 }}>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: colors.background },
+                  animation: Platform.OS === 'web' ? 'none' : 'fade',
+                }}
+              />
+            </View>
             <DemoCue />
           </View>
         </WebShell>
