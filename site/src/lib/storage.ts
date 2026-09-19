@@ -1,7 +1,11 @@
 import { analyzeLanguage } from './language'
 import type { HealthLog, JournalEntry, TrackerState } from './types'
 
-const KEY = 'stress-monitor-tracker-v1'
+const KEY_PREFIX = 'stress-monitor-tracker-v1'
+
+function trackerKey(userId: string) {
+  return `${KEY_PREFIX}:${userId}`
+}
 
 function dayOffset(daysAgo: number) {
   const d = new Date()
@@ -52,9 +56,9 @@ export function seedTracker(): TrackerState {
   return { healthLogs, journals, seeded: true }
 }
 
-export function loadTracker(): TrackerState {
+export function loadTracker(userId: string): TrackerState {
   try {
-    const raw = localStorage.getItem(KEY)
+    const raw = localStorage.getItem(trackerKey(userId))
     if (!raw) return seedTracker()
     const parsed = JSON.parse(raw) as TrackerState
     if (!parsed.healthLogs?.length || !parsed.journals) return seedTracker()
@@ -64,10 +68,10 @@ export function loadTracker(): TrackerState {
   }
 }
 
-export function saveTracker(state: TrackerState) {
-  localStorage.setItem(KEY, JSON.stringify(state))
+export function saveTracker(state: TrackerState, userId: string) {
+  localStorage.setItem(trackerKey(userId), JSON.stringify(state))
 }
 
-export function clearTracker() {
-  localStorage.removeItem(KEY)
+export function clearTracker(userId: string) {
+  localStorage.removeItem(trackerKey(userId))
 }

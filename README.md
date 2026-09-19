@@ -22,6 +22,10 @@ Open the printed localhost URL. GitHub Pages deploys this Vite build to:
 
 (Pages source should be the `gh-pages` branch.)
 
+### Accounts (demo)
+
+Sign in or register on the site to get **per-user** health logs and journals. Credentials and tracker data are stored **only in your browser** (localStorage), keyed by account — suitable for demos, not production auth.
+
 The Expo app under `app/` remains for the mobile prototype.
 
 ## Demo path (2–3 min)

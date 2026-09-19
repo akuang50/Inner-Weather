@@ -16,6 +16,7 @@ import {
   sleepLabel,
 } from '../lib/baseline'
 import { analyzeWithGrok, grokConfigured } from '../lib/grok'
+import { useAuth } from './AuthProvider'
 import { clearTracker, loadTracker, saveTracker, seedTracker } from '../lib/storage'
 import {
   demoTonewatchDays,
@@ -27,6 +28,7 @@ import type { HealthLog, JournalEntry, TonewatchDay } from '../lib/types'
 
 type TrackerContextValue = {
   ready: boolean
+  authenticated: boolean
   healthLogs: HealthLog[]
   journals: JournalEntry[]
   toneDays: TonewatchDay[]
@@ -54,23 +56,31 @@ type TrackerContextValue = {
 const TrackerContext = createContext<TrackerContextValue | null>(null)
 
 export function TrackerProvider({ children }: { children: ReactNode }) {
+  const { user, ready: authReady } = useAuth()
   const [ready, setReady] = useState(false)
   const [healthLogs, setHealthLogs] = useState<HealthLog[]>([])
   const [journals, setJournals] = useState<JournalEntry[]>([])
   const [grokEnabled, setGrokEnabled] = useState(false)
 
   useEffect(() => {
-    const state = loadTracker()
+    if (!authReady) return
+    setGrokEnabled(grokConfigured())
+    if (!user) {
+      setHealthLogs([])
+      setJournals([])
+      setReady(true)
+      return
+    }
+    const state = loadTracker(user.id)
     setHealthLogs(state.healthLogs)
     setJournals(state.journals)
-    setGrokEnabled(grokConfigured())
     setReady(true)
-  }, [])
+  }, [authReady, user?.id])
 
   useEffect(() => {
-    if (!ready) return
-    saveTracker({ healthLogs, journals, seeded: true })
-  }, [healthLogs, journals, ready])
+    if (!ready || !user) return
+    saveTracker({ healthLogs, journals, seeded: true }, user.id)
+  }, [healthLogs, journals, ready, user?.id])
 
   const body = useMemo(() => bodyDeviation(healthLogs), [healthLogs])
   const language = useMemo(() => languageDeviation(journals), [journals])
@@ -103,6 +113,7 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
 
   const addJournal = useCallback(
     async (transcript: string, opts?: { source?: 'voice' | 'typed'; durationSec?: number }) => {
+      if (!user) throw new Error('Sign in to save journal entries.')
       const bodySummary = body.current
         ? `sleep ${body.current.sleepHours}h (${body.deltas.sleepPct}% vs baseline), RHR ${body.current.restingHr} (${body.deltas.restingHeartRatePct}%), steps ${body.current.steps} (${body.deltas.activityPct}%)`
         : undefined
@@ -122,10 +133,11 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
       setJournals((prev) => [...prev, entry])
       return entry
     },
-    [body, language.current.topics],
+    [body, language.current.topics, user],
   )
 
   const logHealth = useCallback((input: { sleepHours: number; restingHr: number; steps: number }) => {
+    if (!user) return
     const date = new Date().toISOString().slice(0, 10)
     setHealthLogs((prev) => {
       const withoutToday = prev.filter((h) => h.date !== date)
@@ -141,22 +153,25 @@ export function TrackerProvider({ children }: { children: ReactNode }) {
         },
       ]
     })
-  }, [])
+  }, [user])
 
   const resetToSeed = useCallback(() => {
+    if (!user) return
     const seeded = seedTracker()
     setHealthLogs(seeded.healthLogs)
     setJournals(seeded.journals)
-  }, [])
+  }, [user])
 
   const clearAll = useCallback(() => {
-    clearTracker()
+    if (!user) return
+    clearTracker(user.id)
     setHealthLogs([])
     setJournals([])
-  }, [])
+  }, [user])
 
   const value: TrackerContextValue = {
-    ready,
+    ready: ready && authReady,
+    authenticated: Boolean(user),
     healthLogs,
     journals,
     toneDays,

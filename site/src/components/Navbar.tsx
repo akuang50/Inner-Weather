@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTracker } from '../state/TrackerProvider'
+import { useAuth } from '../state/AuthProvider'
+import type { AuthUser } from '../lib/auth'
 
 const links = [
   { href: '#demo', label: 'Explore' },
@@ -7,9 +9,18 @@ const links = [
   { href: '#how', label: 'How it works' },
 ]
 
-export function Navbar() {
+export function Navbar({
+  user,
+  onSignIn,
+  onRegister,
+}: {
+  user: AuthUser | null
+  onSignIn: () => void
+  onRegister: () => void
+}) {
+  const { logout } = useAuth()
   const [scrolled, setScrolled] = useState(false)
-  const { realEntryCount, stressScore } = useTracker()
+  const { realEntryCount, stressScore, authenticated } = useTracker()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
@@ -34,7 +45,7 @@ export function Navbar() {
           </span>
           <span className="font-display text-lg tracking-tight text-ink">Stress Monitor</span>
         </a>
-        <div className="hidden items-center gap-7 md:flex">
+        <div className="hidden items-center gap-5 md:flex">
           {links.map((l) => (
             <a
               key={l.href}
@@ -44,14 +55,45 @@ export function Navbar() {
               {l.label}
             </a>
           ))}
-          <span className="rounded-full bg-bg px-2.5 py-1 text-xs text-muted tabular-nums">
-            signal {stressScore}
-            {realEntryCount > 0 ? ` · ${realEntryCount} live` : ''}
-          </span>
+          {authenticated ? (
+            <span className="rounded-full bg-bg px-2.5 py-1 text-xs text-muted tabular-nums">
+              signal {stressScore}
+              {realEntryCount > 0 ? ` · ${realEntryCount} live` : ''}
+            </span>
+          ) : null}
         </div>
-        <a href="#voice" className="btn-primary !px-4 !py-2 text-sm">
-          Talk now
-        </a>
+        <div className="flex items-center gap-2">
+          {user ? (
+            <>
+              <span className="hidden max-w-[8rem] truncate text-sm text-muted sm:inline">
+                {user.displayName}
+              </span>
+              <button
+                type="button"
+                className="rounded-full border border-border px-3 py-2 text-sm text-muted transition hover:text-ink"
+                onClick={() => logout()}
+              >
+                Sign out
+              </button>
+              <a href="#voice" className="btn-primary !px-4 !py-2 text-sm">
+                Talk now
+              </a>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="rounded-full px-3 py-2 text-sm text-muted transition hover:text-ink"
+                onClick={onSignIn}
+              >
+                Sign in
+              </button>
+              <button type="button" className="btn-primary !px-4 !py-2 text-sm" onClick={onRegister}>
+                Get started
+              </button>
+            </>
+          )}
+        </div>
       </nav>
     </header>
   )
