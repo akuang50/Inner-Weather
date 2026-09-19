@@ -1,17 +1,19 @@
-import { stressData } from '../data/stressData'
+import { useTracker } from '../state/TrackerProvider'
 import { Eyebrow, Reveal, Section } from './ui'
 
 export function BaselineSection() {
-  const { baseline, current } = stressData
+  const { baseline, body } = useTracker()
+  const current = body.current
   return (
     <Section className="py-24 md:py-32">
       <Reveal>
-        <Eyebrow>Personal baseline</Eyebrow>
+        <Eyebrow>Personal baseline · computed</Eyebrow>
         <h2 className="mt-4 max-w-xl text-4xl font-semibold tracking-tight md:text-5xl">
           Normal is personal.
         </h2>
         <p className="mt-3 max-w-lg text-muted md:text-lg">
-          We don’t compare you to everyone else. We learn what normal looks like for you.
+          Rolling mean from your last {baseline.n || '—'} logged days (excluding today when
+          possible). Not a population chart.
         </p>
       </Reveal>
 
@@ -38,11 +40,13 @@ export function BaselineSection() {
           <Stat label="RHR" value={`${baseline.restingHeartRate} bpm`} />
           <Stat label="Activity" value={`${baseline.activity.toLocaleString()}/day`} />
         </div>
-        <p className="mt-8 max-w-lg text-base leading-relaxed text-muted">
-          Today: {current.sleepLabel} · {current.restingHeartRate} bpm ·{' '}
-          {current.activity.toLocaleString()} steps. Your current signals are different from this
-          pattern.
-        </p>
+        {current && (
+          <p className="mt-8 max-w-lg text-base leading-relaxed text-muted">
+            Today: {current.sleepHours.toFixed(1)}h · {current.restingHr} bpm ·{' '}
+            {current.steps.toLocaleString()} steps. Deltas: sleep {body.deltas.sleepPct}%, HR{' '}
+            {body.deltas.restingHeartRatePct}%, activity {body.deltas.activityPct}%.
+          </p>
+        )}
       </Reveal>
     </Section>
   )

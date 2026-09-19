@@ -1,42 +1,111 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Mic } from 'lucide-react'
-import { stressData } from '../data/stressData'
+import { speechSupported, startSpeechRecognition } from '../lib/speech'
+import { useTracker } from '../state/TrackerProvider'
 import { Eyebrow, Reveal, Section } from './ui'
 
 type VoiceState = 'idle' | 'listening' | 'processing' | 'result' | 'action'
 
 export function VoiceJournal() {
+  const { addJournal } = useTracker()
   const [state, setState] = useState<VoiceState>('idle')
+  const [transcript, setTranscript] = useState('')
+  const [typed, setTyped] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [themes, setThemes] = useState<string[]>([])
+  const [analysisBars, setAnalysisBars] = useState<
+    { name: string; strength: number }[]
+  >([])
+  const [strongest, setStrongest] = useState('uncertainty')
   const reduce = useReducedMotion()
+  const session = useRef<{ stop: () => void } | null>(null)
+  const startedAt = useRef(0)
+  const supportsSpeech = typeof window !== 'undefined' && speechSupported()
 
   useEffect(() => {
-    if (state !== 'listening') return
-    const t = window.setTimeout(() => setState('processing'), 2000)
-    return () => window.clearTimeout(t)
-  }, [state])
+    return () => session.current?.stop()
+  }, [])
 
-  useEffect(() => {
-    if (state !== 'processing') return
-    const t = window.setTimeout(() => setState('result'), 1400)
-    return () => window.clearTimeout(t)
-  }, [state])
+  const finishWithTranscript = (text: string, source: 'voice' | 'typed') => {
+    const clean = text.trim()
+    if (!clean) {
+      setError('No speech captured — try again or type below.')
+      setState('idle')
+      return
+    }
+    setState('processing')
+    setTranscript(clean)
+    window.setTimeout(() => {
+      const entry = addJournal(clean, {
+        source,
+        durationSec: Math.max(3, Math.round((Date.now() - startedAt.current) / 1000)),
+      })
+      const a = entry.analysis
+      setThemes(a.themes)
+      setAnalysisBars([
+        { name: 'Urgency', strength: a.urgency },
+        { name: 'Uncertainty', strength: a.uncertainty },
+        { name: 'Overwhelm', strength: a.overwhelm },
+        { name: 'Negativity', strength: a.negativity },
+      ].sort((x, y) => y.strength - x.strength).slice(0, 3))
+      const ranking = [
+        { name: 'urgency', v: a.urgency },
+        { name: 'uncertainty', v: a.uncertainty },
+        { name: 'overwhelm', v: a.overwhelm },
+      ].sort((x, y) => y.v - x.v)
+      setStrongest(ranking[0]?.name ?? 'uncertainty')
+      setState('result')
+    }, 700)
+  }
 
   const start = () => {
-    if (state === 'idle' || state === 'result' || state === 'action') setState('listening')
+    if (state === 'listening') return
+    setError(null)
+    setTranscript('')
+    startedAt.current = Date.now()
+
+    if (!supportsSpeech) {
+      setError('Live mic needs Chrome/Edge. Type your rant below — it still gets tracked.')
+      return
+    }
+
+    setState('listening')
+    session.current = startSpeechRecognition({
+      onPartial: (t) => setTranscript(t),
+      onError: (m) => {
+        setError(m)
+        setState('idle')
+      },
+      onFinal: (t) => {
+        // handled on stop
+        if (t) setTranscript(t)
+      },
+    })
+  }
+
+  const stop = () => {
+    if (state !== 'listening') return
+    session.current?.stop()
+    session.current = null
+    // small delay for final results
+    window.setTimeout(() => {
+      finishWithTranscript(transcript || typed, 'voice')
+    }, 350)
   }
 
   return (
     <Section id="voice" dark className="py-24 md:py-32">
       <Reveal>
-        <Eyebrow light>Voice rant</Eyebrow>
+        <Eyebrow light>Voice rant · live</Eyebrow>
         <h2 className="mt-4 max-w-xl text-4xl font-semibold tracking-tight md:text-6xl">
           Don’t journal.
           <br />
           Just talk.
         </h2>
         <p className="mt-4 max-w-md text-base text-white/60 md:text-lg">
-          Hold a button. Say what’s on your mind. We’ll help you find the pattern.
+          Real speech-to-text when your browser allows it. We extract language signals from{' '}
+          <span className="text-white/90">what you actually said</span> and store the entry locally.
         </p>
       </Reveal>
 
@@ -44,8 +113,25 @@ export function VoiceJournal() {
         <Reveal className="flex flex-col items-center text-center">
           <button
             type="button"
-            onClick={start}
-            aria-label="Start voice rant demo"
+            onMouseDown={start}
+            onMouseUp={stop}
+            onMouseLeave={() => {
+              if (state === 'listening') stop()
+            }}
+            onTouchStart={(e) => {
+              e.preventDefault()
+              start()
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault()
+              stop()
+            }}
+            onClick={() => {
+              // click toggle fallback for accessibility
+              if (state === 'listening') stop()
+              else if (state === 'idle' || state === 'result' || state === 'action') start()
+            }}
+            aria-label="Hold to talk"
             className="relative flex h-44 w-44 items-center justify-center rounded-full border border-white/15 bg-white/5 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
           >
             {(state === 'listening' || state === 'processing') && !reduce && (
@@ -65,10 +151,10 @@ export function VoiceJournal() {
             <Mic className="relative h-9 w-9 text-white" strokeWidth={1.5} />
           </button>
           <p className="mt-6 text-sm text-white/55">
-            {state === 'idle' && 'Click to rant'}
-            {state === 'listening' && 'Listening…'}
-            {state === 'processing' && 'Connecting dots…'}
-            {state === 'result' && 'I heard you.'}
+            {state === 'idle' && (supportsSpeech ? 'Hold to rant' : 'Type below to track')}
+            {state === 'listening' && 'Listening… release to analyze'}
+            {state === 'processing' && 'Extracting language signals…'}
+            {state === 'result' && 'I heard you — entry saved.'}
             {state === 'action' && 'A place to start'}
           </p>
 
@@ -78,30 +164,49 @@ export function VoiceJournal() {
                 <motion.span
                   key={i}
                   className="w-1 rounded-full bg-elevated"
-                  animate={
-                    reduce
-                      ? { height: 12 }
-                      : { height: [8, 28, 10, 22, 8] }
-                  }
+                  animate={reduce ? { height: 12 } : { height: [8, 28, 10, 22, 8] }}
                   transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.05 }}
                 />
               ))}
             </div>
           )}
+
+          {error && <p className="mt-4 max-w-xs text-sm text-elevated">{error}</p>}
         </Reveal>
 
         <Reveal delay={0.1}>
+          <label className="block text-sm text-white/50">
+            Or type — still tracked as a real journal entry
+            <textarea
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+              rows={3}
+              placeholder="What’s actually going on…"
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/30 focus:border-white/25"
+            />
+          </label>
+          <button
+            type="button"
+            disabled={typed.trim().length < 3 || state === 'listening' || state === 'processing'}
+            onClick={() => {
+              startedAt.current = Date.now()
+              finishWithTranscript(typed, 'typed')
+              setTyped('')
+            }}
+            className="mt-3 rounded-full border border-white/15 px-4 py-2 text-sm text-white disabled:opacity-40"
+          >
+            Analyze & save text
+          </button>
+
           <AnimatePresence mode="wait">
-            {(state === 'processing' || state === 'result' || state === 'action') && (
+            {(state === 'processing' || state === 'result' || state === 'action') && transcript && (
               <motion.div
                 key="transcript"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-[24px] border border-white/10 bg-white/5 p-6"
+                className="mt-6 rounded-[24px] border border-white/10 bg-white/5 p-6"
               >
-                <p className="text-lg leading-relaxed text-white/85 md:text-xl">
-                  “{stressData.voiceTranscript}”
-                </p>
+                <p className="text-lg leading-relaxed text-white/85 md:text-xl">“{transcript}”</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -115,33 +220,38 @@ export function VoiceJournal() {
               <div>
                 <Eyebrow light>What I heard</Eyebrow>
                 <ol className="mt-4 space-y-3">
-                  {stressData.voiceThemes.map((t, i) => (
-                    <li key={t.name} className="flex items-baseline gap-4">
+                  {themes.map((t, i) => (
+                    <li key={t} className="flex items-baseline gap-4">
                       <span className="text-sm text-white/40">
                         {String(i + 1).padStart(2, '0')}
                       </span>
-                      <div className="flex-1">
-                        <div className="mb-2 flex justify-between text-sm">
-                          <span>{t.name}</span>
-                          <span className="text-white/40">{t.strength}</span>
-                        </div>
-                        <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                          <motion.div
-                            className="h-full rounded-full bg-ai"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${t.strength}%` }}
-                            transition={{ duration: 0.8, delay: i * 0.1 }}
-                          />
-                        </div>
-                      </div>
+                      <span className="text-lg">{t}</span>
                     </li>
                   ))}
                 </ol>
+                <div className="mt-5 space-y-3">
+                  {analysisBars.map((t, i) => (
+                    <div key={t.name}>
+                      <div className="mb-2 flex justify-between text-sm">
+                        <span>{t.name}</span>
+                        <span className="text-white/40">{t.strength}</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                        <motion.div
+                          className="h-full rounded-full bg-ai"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${t.strength}%` }}
+                          transition={{ duration: 0.8, delay: i * 0.1 }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <p className="text-white/65">
-                The strongest change from your recent entries is{' '}
-                <span className="text-white">uncertainty</span>.
+                The strongest shift in this entry is{' '}
+                <span className="text-white">{strongest}</span>. It’s saved to your local timeline.
               </p>
 
               {state === 'result' && (
@@ -161,28 +271,24 @@ export function VoiceJournal() {
                   className="rounded-[24px] border border-ai/30 bg-ai/10 p-6"
                 >
                   <p className="text-lg leading-relaxed">
-                    You don’t seem stuck on the entire project.
-                    <br />
-                    You seem stuck on where to start.
+                    {strongest === 'uncertainty'
+                      ? "You don’t seem stuck on everything — you seem stuck on where to start."
+                      : strongest === 'urgency'
+                        ? 'There’s a lot of urgency here. Name the single next action that would lower the pressure.'
+                        : 'There’s a lot of weight in this. Shrink it to one finishable step.'}
                   </p>
                   <p className="mt-4 text-white/65">
                     Want to turn it into three concrete next steps?
                   </p>
-                  <button
-                    type="button"
-                    className="mt-5 rounded-full bg-ai px-5 py-3 text-sm font-medium text-white"
+                  <a
+                    href="#replay"
+                    className="mt-5 inline-flex rounded-full bg-ai px-5 py-3 text-sm font-medium text-white"
                   >
-                    Let’s do it
-                  </button>
+                    See it on your timeline
+                  </a>
                 </motion.div>
               )}
             </motion.div>
-          )}
-
-          {state === 'idle' && (
-            <p className="text-sm text-white/40">
-              Simulated demo — no audio leaves this page.
-            </p>
           )}
         </Reveal>
       </div>

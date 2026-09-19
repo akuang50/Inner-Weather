@@ -1,23 +1,31 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { stressData } from '../data/stressData'
+import { sleepLabel } from '../lib/baseline'
+import { useTracker } from '../state/TrackerProvider'
 import { Eyebrow, Reveal, Section } from './ui'
 
 export function StressReplay() {
-  const [activeId, setActiveId] = useState<string>(
-    stressData.replay.find((p) => p.spike)?.id ?? stressData.replay[0]!.id,
+  const { daySeries } = useTracker()
+  const defaultIdx = Math.max(
+    0,
+    daySeries.reduce((best, s, i, arr) => (s.score > arr[best]!.score ? i : best), 0),
   )
-  const point = stressData.replay.find((p) => p.id === activeId) ?? stressData.replay[0]!
+  const [selected, setSelected] = useState(defaultIdx)
+  const point = daySeries[selected] ?? daySeries[daySeries.length - 1]
+
+  if (!point) {
+    return null
+  }
 
   return (
     <Section id="replay" className="py-24 md:py-32">
       <Reveal>
-        <Eyebrow>Stress Replay</Eyebrow>
+        <Eyebrow>Stress Replay · your timeline</Eyebrow>
         <h2 className="mt-4 max-w-xl text-4xl font-semibold tracking-tight md:text-5xl">
           See your week differently.
         </h2>
         <p className="mt-3 max-w-md text-muted">
-          Replay the moments when your signals changed.
+          Built from your stored health logs and journals — scrub days that actually exist.
         </p>
       </Reveal>
 
@@ -25,13 +33,13 @@ export function StressReplay() {
         <div className="relative min-w-[560px] px-2 pt-8 pb-10">
           <div className="absolute top-[52px] right-6 left-6 h-px bg-border" />
           <div className="relative flex justify-between">
-            {stressData.replay.map((p) => {
-              const on = p.id === activeId
+            {daySeries.map((p, i) => {
+              const on = i === selected
               return (
                 <button
-                  key={p.id}
+                  key={p.date}
                   type="button"
-                  onClick={() => setActiveId(p.id)}
+                  onClick={() => setSelected(i)}
                   className="relative flex w-20 flex-col items-center"
                 >
                   <span
@@ -39,20 +47,20 @@ export function StressReplay() {
                       on ? 'text-ink' : 'text-muted'
                     }`}
                   >
-                    {p.day}
+                    {p.dayLabel}
                   </span>
                   <span
                     className={`relative z-10 h-3.5 w-3.5 rounded-full border-2 transition ${
-                      p.spike
+                      p.coOccurrence
                         ? 'border-elevated bg-elevated'
                         : on
                           ? 'border-ink bg-ink'
                           : 'border-ink/30 bg-bg'
                     }`}
                   />
-                  {p.spike && (
+                  {p.coOccurrence && (
                     <span className="mt-3 text-[10px] font-semibold tracking-[0.12em] text-elevated uppercase">
-                      Stress spike
+                      Linked
                     </span>
                   )}
                 </button>
@@ -64,7 +72,7 @@ export function StressReplay() {
 
       <Reveal delay={0.15}>
         <motion.div
-          key={point.id}
+          key={point.date}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="rounded-[28px] border border-border bg-white p-6 md:p-10"
@@ -72,11 +80,9 @@ export function StressReplay() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-[11px] font-semibold tracking-[0.16em] text-muted uppercase">
-                {point.day} · {point.time}
+                {point.dayLabel} · {point.date}
               </p>
-              <p className="mt-2 text-3xl font-semibold tracking-tight">
-                Signal {point.score}
-              </p>
+              <p className="mt-2 text-3xl font-semibold tracking-tight">Signal {point.score}</p>
             </div>
             <a
               href="#explain"
@@ -87,17 +93,32 @@ export function StressReplay() {
           </div>
 
           <div className="mt-8 grid gap-6 md:grid-cols-4">
-            <Detail label="Resting HR" value={point.body.hr} />
-            <Detail label="Sleep" value={point.body.sleep} />
-            <Detail label="Urgency in language" value={point.body.urgency} />
-            <Detail label="Recurring topic" value={point.topic} />
+            <Detail
+              label="Sleep"
+              value={point.sleepHours != null ? sleepLabel(point.sleepHours) : '—'}
+            />
+            <Detail label="Resting HR" value={point.restingHr != null ? `${point.restingHr}` : '—'} />
+            <Detail
+              label="Language urgency"
+              value={point.language ? String(point.language.urgency) : '—'}
+            />
+            <Detail label="Top topic" value={point.topics[0] ?? '—'} />
           </div>
 
           <div className="mt-8 border-t border-border pt-6">
             <p className="text-[11px] font-semibold tracking-[0.16em] text-muted uppercase">
               Why we noticed
             </p>
-            <p className="mt-2 max-w-xl text-base leading-relaxed text-ink">{point.why}</p>
+            <p className="mt-2 max-w-xl text-base leading-relaxed text-ink">
+              {point.coOccurrence
+                ? 'Body deviation and language shift co-occurred against your personal baseline.'
+                : point.bodyScore > 0.45 || point.languageScore > 0.45
+                  ? 'One channel moved; the other hasn’t fully confirmed it yet.'
+                  : 'Channels stayed near your normal weather.'}
+            </p>
+            {point.transcript && (
+              <p className="mt-4 text-sm text-muted">“{point.transcript}”</p>
+            )}
           </div>
         </motion.div>
       </Reveal>

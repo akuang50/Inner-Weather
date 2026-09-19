@@ -1,15 +1,18 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { stressData, type SignalTab } from '../data/stressData'
+import type { SignalTab } from '../data/stressData'
+import { sleepLabel } from '../lib/baseline'
+import { useTracker } from '../state/TrackerProvider'
 import { Bar, Eyebrow, Reveal, Section } from './ui'
 
 const tabs: { id: SignalTab; title: string; blurb: string }[] = [
   { id: 'body', title: 'Body', blurb: 'What your physiology is doing.' },
   { id: 'words', title: 'Words', blurb: 'How the way you communicate is changing.' },
-  { id: 'context', title: 'Context', blurb: "What's happening in your life." },
+  { id: 'context', title: 'Context', blurb: "What's recurring in your life language." },
 ]
 
 export function SignalExplorer() {
+  const { body, language, coOccurrence, stressScore } = useTracker()
   const [active, setActive] = useState<SignalTab>('body')
   const [seen, setSeen] = useState<Record<SignalTab, boolean>>({
     body: true,
@@ -21,11 +24,15 @@ export function SignalExplorer() {
   return (
     <Section id="signals" className="py-24 md:py-32">
       <Reveal>
-        <Eyebrow>Something changed</Eyebrow>
+        <Eyebrow>Something changed · live signals</Eyebrow>
         <h2 className="mt-4 max-w-xl text-4xl font-semibold tracking-tight md:text-5xl">
           Stress isn’t one signal.
         </h2>
         <p className="mt-3 text-2xl text-muted md:text-3xl">It’s a pattern.</p>
+        <p className="mt-3 text-sm text-muted">
+          Current fused stress signal: <span className="font-semibold text-ink">{stressScore}</span>
+          {coOccurrence ? ' · body + language co-occurring' : ''}
+        </p>
       </Reveal>
 
       <div className="mt-12 grid gap-4 md:grid-cols-3">
@@ -76,13 +83,17 @@ export function SignalExplorer() {
 
       {linked && (
         <Reveal className="mt-10">
-          <CrossModalInsight />
+          <CrossModalInsight
+            coOccurrence={coOccurrence}
+            deltas={body.deltas}
+            language={language.current}
+          />
         </Reveal>
       )}
 
       {!linked && (
         <p className="mt-8 text-sm text-muted">
-          Explore all three channels — then we’ll connect them.
+          Explore all three channels — then we’ll connect them from your tracked data.
         </p>
       )}
     </Section>
@@ -90,55 +101,73 @@ export function SignalExplorer() {
 }
 
 function BodyPanel() {
-  const { current, baseline, deltas } = stressData
+  const { body } = useTracker()
+  const { baseline, current, deltas } = body
+  if (!current) {
+    return <p className="text-muted">Log a health day below to start tracking body signals.</p>
+  }
   return (
     <div>
       <Eyebrow>Your body</Eyebrow>
       <div className="mt-8 grid gap-8 md:grid-cols-3">
         <Metric
           label="Resting heart rate"
-          value={`${current.restingHeartRate} bpm`}
-          delta={`↑ ${deltas.restingHeartRatePct}% from baseline`}
-          bar={70}
+          value={`${current.restingHr} bpm`}
+          delta={`${deltas.restingHeartRatePct >= 0 ? '↑' : '↓'} ${Math.abs(deltas.restingHeartRatePct)}% from baseline`}
+          bar={Math.min(95, 40 + Math.abs(deltas.restingHeartRatePct) * 2)}
         />
         <Metric
           label="Sleep"
-          value={current.sleepLabel}
-          delta={`↓ ${Math.abs(deltas.sleepPct)}% from baseline`}
-          bar={55}
+          value={sleepLabel(current.sleepHours)}
+          delta={`${deltas.sleepPct >= 0 ? '↑' : '↓'} ${Math.abs(deltas.sleepPct)}% from baseline`}
+          bar={Math.min(95, 40 + Math.abs(deltas.sleepPct) * 2)}
           tone="changing"
         />
         <Metric
           label="Activity"
-          value={`${current.activity.toLocaleString()} steps`}
-          delta={`↓ ${Math.abs(deltas.activityPct)}% from baseline`}
-          bar={48}
+          value={`${current.steps.toLocaleString()} steps`}
+          delta={`${deltas.activityPct >= 0 ? '↑' : '↓'} ${Math.abs(deltas.activityPct)}% from baseline`}
+          bar={Math.min(95, 40 + Math.abs(deltas.activityPct) * 1.5)}
           tone="changing"
         />
       </div>
       <p className="mt-8 max-w-lg text-sm leading-relaxed text-muted">
-        Baseline for you: {baseline.sleepLabel} sleep · {baseline.restingHeartRate} bpm ·{' '}
-        {baseline.activity.toLocaleString()} steps/day. These signals are different from your recent
-        pattern — not a diagnosis.
+        Your baseline ({baseline.n} days): {baseline.sleepLabel} sleep · {baseline.restingHeartRate}{' '}
+        bpm · {baseline.activity.toLocaleString()} steps/day. These are differences from{' '}
+        <em>your</em> pattern — not a diagnosis.
       </p>
     </div>
   )
 }
 
 function WordsPanel() {
-  const { language, topics } = stressData
+  const { language } = useTracker()
+  const { current, urgencyDelta } = language
   return (
     <div className="grid gap-10 md:grid-cols-2">
       <div className="space-y-5">
         <Eyebrow>Your words</Eyebrow>
-        <LangRow label="Urgency" value={language.urgency} />
-        <LangRow label="Negative language" value={language.negativity} />
-        <LangRow label="Uncertainty" value={language.uncertainty} />
+        <p className="text-sm text-muted">
+          From your journal history
+          {urgencyDelta !== 0 && (
+            <>
+              {' '}
+              · urgency {urgencyDelta > 0 ? '+' : ''}
+              {urgencyDelta} vs earlier entries
+            </>
+          )}
+        </p>
+        <LangRow label="Urgency" value={current.urgency} />
+        <LangRow label="Negative language" value={current.negativity} />
+        <LangRow label="Uncertainty" value={current.uncertainty} />
       </div>
       <div>
         <Eyebrow>Recurring themes</Eyebrow>
         <ul className="mt-6 space-y-4">
-          {topics.map((t) => (
+          {current.topics.length === 0 && (
+            <li className="text-sm text-muted">Add a voice rant or text entry to extract topics.</li>
+          )}
+          {current.topics.map((t) => (
             <li key={t.name} className="flex items-center justify-between border-b border-border pb-3">
               <span className="font-medium tracking-tight uppercase">{t.name}</span>
               <span className="text-muted">{t.mentions}×</span>
@@ -151,26 +180,38 @@ function WordsPanel() {
 }
 
 function ContextPanel() {
+  const { language, journals } = useTracker()
+  const top = language.current.topics[0]
+  const recent = [...journals].reverse().slice(0, 3)
   return (
     <div>
       <Eyebrow>Your context</Eyebrow>
-      <p className="mt-2 text-sm text-muted">This week</p>
+      <p className="mt-2 text-sm text-muted">Extracted from what you’ve said — not a calendar scrape.</p>
       <ul className="mt-6 space-y-4">
-        {stressData.context.map((c) => (
+        {language.current.topics.slice(0, 3).map((c) => (
           <li
-            key={c.label}
+            key={c.name}
             className="flex items-center justify-between rounded-2xl bg-bg px-4 py-3"
           >
-            <span className="font-medium">{c.label}</span>
-            <span className="text-muted">{c.when}</span>
+            <span className="font-medium">{c.name}</span>
+            <span className="text-muted">{c.mentions} mentions</span>
           </li>
         ))}
       </ul>
-      <p className="mt-8 max-w-md text-base leading-relaxed text-ink">
-        Your journal mentioned your project deadline{' '}
-        <span className="font-semibold">{stressData.topics[0]!.mentions} times</span> this week.
-        That’s context — not proof of cause.
-      </p>
+      {top ? (
+        <p className="mt-8 max-w-md text-base leading-relaxed text-ink">
+          Your journals mention <span className="font-semibold">{top.name}</span>{' '}
+          <span className="font-semibold">{top.mentions} times</span> recently. That’s contextual
+          evidence — not proof of cause.
+        </p>
+      ) : (
+        <p className="mt-8 text-muted">No recurring topics yet.</p>
+      )}
+      {recent[0] && (
+        <p className="mt-4 text-sm text-muted line-clamp-2">
+          Latest: “{recent[0].transcript}”
+        </p>
+      )}
     </div>
   )
 }
@@ -205,14 +246,22 @@ function LangRow({ label, value }: { label: string; value: number }) {
     <div>
       <div className="mb-2 flex justify-between text-sm">
         <span>{label}</span>
-        <span className="font-medium text-elevated">+{value}%</span>
+        <span className="font-medium text-elevated">{value}</span>
       </div>
-      <Bar value={value + 20} tone="elevated" />
+      <Bar value={value} tone="elevated" />
     </div>
   )
 }
 
-function CrossModalInsight() {
+function CrossModalInsight({
+  coOccurrence,
+  deltas,
+  language,
+}: {
+  coOccurrence: boolean
+  deltas: { sleepPct: number; restingHeartRatePct: number; activityPct: number }
+  language: { urgency: number; topics: { name: string; mentions: number }[] }
+}) {
   return (
     <div className="rounded-[28px] border border-border bg-ink p-8 text-white md:p-10">
       <div className="grid gap-8 md:grid-cols-[0.9fr_1.1fr] md:items-center">
@@ -227,12 +276,25 @@ function CrossModalInsight() {
           <p className="pl-10 text-ai">INSIGHT</p>
         </div>
         <div>
-          <p className="text-3xl font-semibold tracking-tight md:text-4xl">Something changed.</p>
+          <p className="text-3xl font-semibold tracking-tight md:text-4xl">
+            {coOccurrence ? 'Something changed.' : 'Watching for co-occurrence.'}
+          </p>
           <ul className="mt-6 space-y-3 text-white/75">
-            <li>Your sleep decreased.</li>
-            <li>Your physiological signals shifted.</li>
-            <li>Your language became more urgent.</li>
-            <li>You repeatedly mentioned your deadline.</li>
+            <li>
+              Sleep {deltas.sleepPct >= 0 ? 'increased' : 'decreased'} {Math.abs(deltas.sleepPct)}% vs
+              your baseline.
+            </li>
+            <li>
+              Resting HR {deltas.restingHeartRatePct >= 0 ? 'up' : 'down'}{' '}
+              {Math.abs(deltas.restingHeartRatePct)}%.
+            </li>
+            <li>Language urgency is at {language.urgency}.</li>
+            {language.topics[0] && (
+              <li>
+                You repeatedly mentioned {language.topics[0].name.toLowerCase()} (
+                {language.topics[0].mentions}×).
+              </li>
+            )}
           </ul>
           <a
             href="#voice"

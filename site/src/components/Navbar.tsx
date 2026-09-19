@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
+import { useTracker } from '../state/TrackerProvider'
 
 const links = [
   { href: '#demo', label: 'Explore' },
+  { href: '#track', label: 'Track' },
   { href: '#how', label: 'How it works' },
 ]
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
+  const { realEntryCount, stressScore } = useTracker()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
@@ -38,12 +41,16 @@ export function Navbar() {
               {l.label}
             </a>
           ))}
+          <span className="text-xs text-muted tabular-nums">
+            signal {stressScore}
+            {realEntryCount > 0 ? ` · ${realEntryCount} live` : ''}
+          </span>
         </div>
         <a
-          href="#demo"
+          href="#voice"
           className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
         >
-          Try the Demo
+          Talk now
         </a>
       </nav>
     </header>

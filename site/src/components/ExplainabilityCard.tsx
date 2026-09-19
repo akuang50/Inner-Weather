@@ -1,22 +1,29 @@
-import { stressData } from '../data/stressData'
+import { sleepLabel } from '../lib/baseline'
+import { useTracker } from '../state/TrackerProvider'
 import { Bar, Eyebrow, Reveal, Section } from './ui'
 
 export function ExplainabilityCard() {
+  const { body, language, stressScore, coOccurrence } = useTracker()
+  const current = body.current
   const items = [
     {
-      title: 'Sleep is lower than baseline',
-      value: Math.abs(stressData.deltas.sleepPct) + 40,
-      detail: `${stressData.current.sleepLabel} vs ${stressData.baseline.sleepLabel}`,
+      title: 'Sleep vs your baseline',
+      value: Math.min(95, 35 + Math.abs(body.deltas.sleepPct) * 2),
+      detail: current
+        ? `${sleepLabel(current.sleepHours)} vs ${body.baseline.sleepLabel} (${body.deltas.sleepPct}%)`
+        : 'Log health to compare',
     },
     {
-      title: 'Resting HR is higher',
-      value: stressData.deltas.restingHeartRatePct + 45,
-      detail: `${stressData.current.restingHeartRate} vs ${stressData.baseline.restingHeartRate} bpm`,
+      title: 'Resting HR vs your baseline',
+      value: Math.min(95, 35 + Math.abs(body.deltas.restingHeartRatePct) * 2),
+      detail: current
+        ? `${current.restingHr} vs ${body.baseline.restingHeartRate} bpm (${body.deltas.restingHeartRatePct}%)`
+        : 'Log health to compare',
     },
     {
       title: 'Language changed',
-      value: stressData.language.urgency + 30,
-      detail: `Urgency +${stressData.language.urgency}%`,
+      value: language.current.urgency,
+      detail: `Urgency ${language.current.urgency} · uncertainty ${language.current.uncertainty}`,
     },
   ]
 
@@ -30,13 +37,16 @@ export function ExplainabilityCard() {
         <p className="mt-3 text-muted md:text-lg">Every insight tells you why it appeared.</p>
       </Reveal>
 
-      <Reveal delay={0.1} className="mt-12 rounded-[28px] border border-border bg-white p-6 shadow-[0_24px_80px_rgba(21,23,26,0.05)] md:p-10">
+      <Reveal
+        delay={0.1}
+        className="mt-12 rounded-[28px] border border-border bg-white p-6 shadow-[0_24px_80px_rgba(21,23,26,0.05)] md:p-10"
+      >
         <p className="text-2xl font-semibold tracking-tight md:text-3xl">
-          Your stress signals are elevated.
+          {coOccurrence
+            ? `Your stress signal is elevated (${stressScore}).`
+            : `Your stress signal is ${stressScore}.`}
         </p>
-        <p className="mt-8 text-[11px] font-semibold tracking-[0.16em] text-muted uppercase">
-          Why?
-        </p>
+        <p className="mt-8 text-[11px] font-semibold tracking-[0.16em] text-muted uppercase">Why?</p>
         <ol className="mt-5 space-y-6">
           {items.map((item, i) => (
             <li key={item.title}>
@@ -55,7 +65,9 @@ export function ExplainabilityCard() {
           <li className="flex gap-3">
             <span className="text-sm text-muted">04</span>
             <p className="font-medium">
-              Deadline mentioned {stressData.topics[0]!.mentions}×
+              {language.current.topics[0]
+                ? `${language.current.topics[0].name} mentioned ${language.current.topics[0].mentions}×`
+                : 'No dominant topic yet — keep talking'}
             </p>
           </li>
         </ol>
@@ -65,10 +77,13 @@ export function ExplainabilityCard() {
             <p className="text-[11px] font-semibold tracking-[0.16em] text-muted uppercase">
               Confidence
             </p>
-            <p className="mt-1 text-xl font-semibold text-ai">{stressData.confidence}</p>
+            <p className="mt-1 text-xl font-semibold text-ai">
+              {body.baseline.n >= 7 && language.latest ? 'High' : 'Building'}
+            </p>
           </div>
           <p className="max-w-sm text-sm leading-relaxed text-muted">
-            These patterns don’t establish causation or a diagnosis.
+            These patterns don’t establish causation or a diagnosis. Computed on-device from your
+            logs.
           </p>
         </div>
       </Reveal>
