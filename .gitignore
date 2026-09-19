@@ -52,3 +52,10 @@ Thumbs.db
 # Misc
 *.local
 .turbo/
+
+# Tonewatch local outputs (demo scores live in src/data/)
+tonewatch/tone_scores.sqlite
+tonewatch/scores.json
+tonewatch/**/__pycache__/
+tonewatch/**/*.pyc
+.pytest_cache/

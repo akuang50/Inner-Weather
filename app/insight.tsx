@@ -38,7 +38,7 @@ export default function InsightScreen() {
 
           <SectionLabel>Cross-modal link</SectionLabel>
           <View style={styles.chain}>
-            {['Voice', 'Deadline', 'Journal history', 'Health deviation', 'Stress signal'].map(
+            {['Voice', 'Messages', 'Deadline', 'Health deviation', 'Stress signal'].map(
               (step, i, arr) => (
                 <View key={step} style={styles.chainItem}>
                   <Text style={styles.chainText}>{step}</Text>

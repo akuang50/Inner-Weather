@@ -1,0 +1,466 @@
+[
+  {
+    "day": "2026-09-05",
+    "n_out": 14,
+    "mean_len": 29.43,
+    "late_night": 0,
+    "excl_rate": 0.143,
+    "caps_rate": 0.0,
+    "median_latency_min": 6.0,
+    "stress_score": 1.5,
+    "score_spread": 0.0,
+    "confidence": 0.5,
+    "dominant_emotions": [
+      "calm"
+    ],
+    "signals": [
+      "relaxed, chatty replies"
+    ],
+    "evidence_times": [],
+    "insufficient": false,
+    "samples_ok": 1,
+    "z": {
+      "stress_score": null,
+      "n_out": null,
+      "mean_len": null,
+      "late_night": null,
+      "excl_rate": null,
+      "caps_rate": null,
+      "median_latency_min": null
+    },
+    "flags": []
+  },
+  {
+    "day": "2026-09-06",
+    "n_out": 12,
+    "mean_len": 33.17,
+    "late_night": 0,
+    "excl_rate": 0.083,
+    "caps_rate": 0.0,
+    "median_latency_min": 6.5,
+    "stress_score": 1.5,
+    "score_spread": 0.0,
+    "confidence": 0.5,
+    "dominant_emotions": [
+      "calm"
+    ],
+    "signals": [
+      "relaxed, chatty replies"
+    ],
+    "evidence_times": [],
+    "insufficient": false,
+    "samples_ok": 1,
+    "z": {
+      "stress_score": null,
+      "n_out": null,
+      "mean_len": null,
+      "late_night": null,
+      "excl_rate": null,
+      "caps_rate": null,
+      "median_latency_min": null
+    },
+    "flags": []
+  },
+  {
+    "day": "2026-09-07",
+    "n_out": 16,
+    "mean_len": 27.75,
+    "late_night": 0,
+    "excl_rate": 0.125,
+    "caps_rate": 0.0,
+    "median_latency_min": 4.0,
+    "stress_score": 1.5,
+    "score_spread": 0.0,
+    "confidence": 0.5,
+    "dominant_emotions": [
+      "calm"
+    ],
+    "signals": [
+      "relaxed, chatty replies"
+    ],
+    "evidence_times": [],
+    "insufficient": false,
+    "samples_ok": 1,
+    "z": {
+      "stress_score": null,
+      "n_out": null,
+      "mean_len": null,
+      "late_night": null,
+      "excl_rate": null,
+      "caps_rate": null,
+      "median_latency_min": null
+    },
+    "flags": []
+  },
+  {
+    "day": "2026-09-08",
+    "n_out": 12,
+    "mean_len": 28.08,
+    "late_night": 0,
+    "excl_rate": 0.083,
+    "caps_rate": 0.0,
+    "median_latency_min": 4.0,
+    "stress_score": 1.5,
+    "score_spread": 0.0,
+    "confidence": 0.5,
+    "dominant_emotions": [
+      "calm"
+    ],
+    "signals": [
+      "relaxed, chatty replies"
+    ],
+    "evidence_times": [],
+    "insufficient": false,
+    "samples_ok": 1,
+    "z": {
+      "stress_score": null,
+      "n_out": null,
+      "mean_len": null,
+      "late_night": null,
+      "excl_rate": null,
+      "caps_rate": null,
+      "median_latency_min": null
+    },
+    "flags": []
+  },
+  {
+    "day": "2026-09-09",
+    "n_out": 13,
+    "mean_len": 31.08,
+    "late_night": 0,
+    "excl_rate": 0.154,
+    "caps_rate": 0.0,
+    "median_latency_min": 5.0,
+    "stress_score": 1.5,
+    "score_spread": 0.0,
+    "confidence": 0.5,
+    "dominant_emotions": [
+      "calm"
+    ],
+    "signals": [
+      "relaxed, chatty replies"
+    ],
+    "evidence_times": [],
+    "insufficient": false,
+    "samples_ok": 1,
+    "z": {
+      "stress_score": null,
+      "n_out": null,
+      "mean_len": null,
+      "late_night": null,
+      "excl_rate": null,
+      "caps_rate": null,
+      "median_latency_min": null
+    },
+    "flags": []
+  },
+  {
+    "day": "2026-09-10",
+    "n_out": 17,
+    "mean_len": 32.41,
+    "late_night": 0,
+    "excl_rate": 0.176,
+    "caps_rate": 0.0,
+    "median_latency_min": 5.0,
+    "stress_score": 1.5,
+    "score_spread": 0.0,
+    "confidence": 0.5,
+    "dominant_emotions": [
+      "calm"
+    ],
+    "signals": [
+      "relaxed, chatty replies"
+    ],
+    "evidence_times": [],
+    "insufficient": false,
+    "samples_ok": 1,
+    "z": {
+      "stress_score": 0.0,
+      "n_out": 2.0,
+      "mean_len": 0.6,
+      "late_night": 0.0,
+      "excl_rate": 1.02,
+      "caps_rate": 0.0,
+      "median_latency_min": 0.0
+    },
+    "flags": []
+  },
+  {
+    "day": "2026-09-11",
+    "n_out": 15,
+    "mean_len": 26.27,
+    "late_night": 0,
+    "excl_rate": 0.333,
+    "caps_rate": 0.0,
+    "median_latency_min": 5.0,
+    "stress_score": 1.5,
+    "score_spread": 0.0,
+    "confidence": 0.5,
+    "dominant_emotions": [
+      "calm"
+    ],
+    "signals": [
+      "relaxed, chatty replies"
+    ],
+    "evidence_times": [],
+    "insufficient": false,
+    "samples_ok": 1,
+    "z": {
+      "stress_score": 0.0,
+      "n_out": 0.67,
+      "mean_len": -0.8,
+      "late_night": 0.0,
+      "excl_rate": 3.98,
+      "caps_rate": 0.0,
+      "median_latency_min": 0.0
+    },
+    "flags": []
+  },
+  {
+    "day": "2026-09-12",
+    "n_out": 17,
+    "mean_len": 29.94,
+    "late_night": 0,
+    "excl_rate": 0.235,
+    "caps_rate": 0.0,
+    "median_latency_min": 5.0,
+    "stress_score": 1.5,
+    "score_spread": 0.0,
+    "confidence": 0.5,
+    "dominant_emotions": [
+      "calm"
+    ],
+    "signals": [
+      "relaxed, chatty replies"
+    ],
+    "evidence_times": [],
+    "insufficient": false,
+    "samples_ok": 1,
+    "z": {
+      "stress_score": 0.0,
+      "n_out": 1.01,
+      "mean_len": 0.1,
+      "late_night": 0.0,
+      "excl_rate": 1.84,
+      "caps_rate": 0.0,
+      "median_latency_min": 0.0
+    },
+    "flags": []
+  },
+  {
+    "day": "2026-09-13",
+    "n_out": 15,
+    "mean_len": 29.13,
+    "late_night": 0,
+    "excl_rate": 0.2,
+    "caps_rate": 0.0,
+    "median_latency_min": 6.0,
+    "stress_score": 1.5,
+    "score_spread": 0.0,
+    "confidence": 0.5,
+    "dominant_emotions": [
+      "calm"
+    ],
+    "signals": [
+      "relaxed, chatty replies"
+    ],
+    "evidence_times": [],
+    "insufficient": false,
+    "samples_ok": 1,
+    "z": {
+      "stress_score": 0.0,
+      "n_out": 0.17,
+      "mean_len": -0.11,
+      "late_night": 0.0,
+      "excl_rate": 0.75,
+      "caps_rate": 0.0,
+      "median_latency_min": 0.5
+    },
+    "flags": []
+  },
+  {
+    "day": "2026-09-14",
+    "n_out": 13,
+    "mean_len": 27.15,
+    "late_night": 0,
+    "excl_rate": 0.231,
+    "caps_rate": 0.0,
+    "median_latency_min": 7.0,
+    "stress_score": 1.5,
+    "score_spread": 0.0,
+    "confidence": 0.5,
+    "dominant_emotions": [
+      "calm"
+    ],
+    "signals": [
+      "relaxed, chatty replies"
+    ],
+    "evidence_times": [],
+    "insufficient": false,
+    "samples_ok": 1,
+    "z": {
+      "stress_score": 0.0,
+      "n_out": -0.67,
+      "mean_len": -0.46,
+      "late_night": 0.0,
+      "excl_rate": 1.13,
+      "caps_rate": 0.0,
+      "median_latency_min": 1.0
+    },
+    "flags": []
+  },
+  {
+    "day": "2026-09-15",
+    "n_out": 12,
+    "mean_len": 28.25,
+    "late_night": 0,
+    "excl_rate": 0.25,
+    "caps_rate": 0.0,
+    "median_latency_min": 5.0,
+    "stress_score": 1.5,
+    "score_spread": 0.0,
+    "confidence": 0.5,
+    "dominant_emotions": [
+      "calm"
+    ],
+    "signals": [
+      "relaxed, chatty replies"
+    ],
+    "evidence_times": [],
+    "insufficient": false,
+    "samples_ok": 1,
+    "z": {
+      "stress_score": 0.0,
+      "n_out": -1.12,
+      "mean_len": -0.21,
+      "late_night": 0.0,
+      "excl_rate": 1.08,
+      "caps_rate": 0.0,
+      "median_latency_min": 0.0
+    },
+    "flags": []
+  },
+  {
+    "day": "2026-09-16",
+    "n_out": 9,
+    "mean_len": 24,
+    "late_night": 3,
+    "excl_rate": 0.0,
+    "caps_rate": 0.0,
+    "median_latency_min": 128.5,
+    "stress_score": 9.5,
+    "score_spread": 0.0,
+    "confidence": 0.5,
+    "dominant_emotions": [
+      "overwhelmed",
+      "irritable"
+    ],
+    "signals": [
+      "terse, apologetic replies"
+    ],
+    "evidence_times": [
+      "01:51",
+      "03:21",
+      "03:26",
+      "09:40",
+      "14:23"
+    ],
+    "insufficient": false,
+    "samples_ok": 1,
+    "z": {
+      "stress_score": 10.67,
+      "n_out": -1.69,
+      "mean_len": -1.03,
+      "late_night": 3.0,
+      "excl_rate": -2.16,
+      "caps_rate": 0.0,
+      "median_latency_min": 61.75
+    },
+    "flags": [
+      "tone drifting tense vs. own baseline",
+      "texting behavior shifted: late_night, excl_rate, median_latency_min"
+    ]
+  },
+  {
+    "day": "2026-09-17",
+    "n_out": 8,
+    "mean_len": 16.62,
+    "late_night": 1,
+    "excl_rate": 0.0,
+    "caps_rate": 0.0,
+    "median_latency_min": 75.0,
+    "stress_score": 9.5,
+    "score_spread": 0.0,
+    "confidence": 0.5,
+    "dominant_emotions": [
+      "overwhelmed",
+      "irritable"
+    ],
+    "signals": [
+      "terse, apologetic replies"
+    ],
+    "evidence_times": [
+      "03:29",
+      "09:11",
+      "09:31",
+      "09:56",
+      "12:26"
+    ],
+    "insufficient": false,
+    "samples_ok": 1,
+    "z": {
+      "stress_score": 10.67,
+      "n_out": -2.47,
+      "mean_len": -2.41,
+      "late_night": 1.0,
+      "excl_rate": -1.64,
+      "caps_rate": 0.0,
+      "median_latency_min": 35.0
+    },
+    "flags": [
+      "tone drifting tense vs. own baseline",
+      "texting behavior shifted: n_out, mean_len, median_latency_min"
+    ]
+  },
+  {
+    "day": "2026-09-18",
+    "n_out": 8,
+    "mean_len": 27.25,
+    "late_night": 3,
+    "excl_rate": 0.0,
+    "caps_rate": 0.0,
+    "median_latency_min": 109.5,
+    "stress_score": 9.5,
+    "score_spread": 0.0,
+    "confidence": 0.5,
+    "dominant_emotions": [
+      "overwhelmed",
+      "irritable"
+    ],
+    "signals": [
+      "terse, apologetic replies"
+    ],
+    "evidence_times": [
+      "01:03",
+      "03:02",
+      "03:56",
+      "09:56",
+      "14:13"
+    ],
+    "insufficient": false,
+    "samples_ok": 1,
+    "z": {
+      "stress_score": 10.67,
+      "n_out": -1.69,
+      "mean_len": -0.2,
+      "late_night": 3.0,
+      "excl_rate": -1.46,
+      "caps_rate": 0.0,
+      "median_latency_min": 52.25
+    },
+    "flags": [
+      "tone drifting tense vs. own baseline",
+      "texting behavior shifted: late_night, median_latency_min"
+    ]
+  }
+]

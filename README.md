@@ -45,11 +45,12 @@ npm run export:web   # local static build → dist/
 Mobile UI (Expo)
    ├── Apple Health (demo dataset today)
    ├── Voice rant (expo-av → transcript placeholder)
-   └── Journals
+   ├── Journals
+   └── Tonewatch message tone (scores.json — no raw texts)
             ↓
    Signal pipeline + personal baseline (src/engine/baseline.ts)
             ↓
-   Fusion + structured insight (src/engine/stress.ts)
+   Fusion + structured insight (src/engine/stress.ts + tonewatch.ts)
             ↓
    Home · Insight · Replay · Actions
 ```
@@ -59,8 +60,11 @@ Mobile UI (Expo)
 | Screens | `app/` (expo-router) |
 | Types / schema | `src/types.ts` |
 | Demo persona (Alex) | `src/data/demoDataset.ts` |
+| Tonewatch demo scores | `src/data/tonewatchScores.json` |
+| Tonewatch → app bridge | `src/engine/tonewatch.ts` |
 | Baseline + deviations | `src/engine/baseline.ts` |
 | Stress index + insights | `src/engine/stress.ts` |
+| Python Messages pipeline | `tonewatch/` |
 | Theme | `src/theme.ts` |
 | Design doc | `DESIGN.md` |
 

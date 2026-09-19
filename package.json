@@ -6,7 +6,8 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "EXPO_NO_TYPED_ROUTES=1 expo start --web",
+    "web": "EXPO_NO_TYPED_ROUTES=1 BROWSER=none expo start --web --localhost",
+    "web:open": "EXPO_NO_TYPED_ROUTES=1 expo start --web --localhost",
     "export:web": "EXPO_NO_TYPED_ROUTES=1 expo export --platform web",
     "typecheck": "tsc --noEmit"
   },

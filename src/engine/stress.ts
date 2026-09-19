@@ -1,10 +1,16 @@
 import { physiologicalAggregate } from './baseline';
+import {
+  latestScoredDay,
+  messagingChangePct,
+  messagingSignalFromDays,
+  toneContributingFactors,
+} from './tonewatch';
 import type {
   HealthSignal,
   InsightPayload,
-  JournalEntry,
   LanguageAnalysis,
   StressSnapshot,
+  TonewatchDay,
 } from '../types';
 
 function mean(nums: number[]): number {
@@ -65,10 +71,13 @@ export function languageFeatures(analyses: LanguageAnalysis[]): {
 /**
  * Prototype Stress Signal Index (0–100).
  * Explicitly experimental weights — not a medical model.
+ *
+ * Channels: physiology + journal language + Tonewatch messaging tone + context topics.
  */
 export function computeStressSnapshot(
   health: HealthSignal[],
   analyses: LanguageAnalysis[],
+  toneDays: TonewatchDay[] = [],
   now = new Date().toISOString(),
 ): StressSnapshot {
   const phys = physiologicalAggregate(health);
@@ -79,18 +88,24 @@ export function computeStressSnapshot(
     lang.urgency * 0.35 + lang.uncertainty * 0.25 + lang.overwhelm * 0.25 + lang.negative * 0.15,
   );
 
+  const messagingSignal = messagingSignalFromDays(toneDays);
+  const latestTone = latestScoredDay(toneDays);
+
   const topTopic = lang.topics[0];
   const contextSignal = topTopic ? Math.min(1, (topTopic.weight * topTopic.count) / 4) : 0.2;
 
   // Experimental fusion weights for hackathon prototype
-  const fused =
-    phys.score * 0.4 + languageSignal * 0.4 + contextSignal * 0.2;
+  const hasMessaging = toneDays.some((d) => d.stress_score != null);
+  const fused = hasMessaging
+    ? phys.score * 0.35 + languageSignal * 0.25 + messagingSignal * 0.25 + contextSignal * 0.15
+    : phys.score * 0.4 + languageSignal * 0.4 + contextSignal * 0.2;
 
   const score = Math.round(Math.max(5, Math.min(98, fused * 100)));
   const baselineScore = 47; // demo "recent normal" for narrative; refined later
   const change = score - baselineScore;
 
   const languageChangePct = Math.round((languageSignal - 0.25) * 100);
+  const msgChangePct = messagingChangePct(toneDays);
 
   const contributingFactors: string[] = [];
   for (const d of phys.deviations) {
@@ -107,14 +122,18 @@ export function computeStressSnapshot(
       `You mentioned “${topTopic.topic}” in ${topTopic.count} of your recent entries`,
     );
   }
+  contributingFactors.push(...toneContributingFactors(toneDays));
 
   const confidence = Math.min(
     0.95,
-    0.55 + phys.deviations.length * 0.05 + Math.min(analyses.length, 6) * 0.03,
+    0.55 +
+      phys.deviations.length * 0.05 +
+      Math.min(analyses.length, 6) * 0.03 +
+      (hasMessaging ? 0.04 : 0),
   );
 
-  // Synthetic week sparkline ending at today's score
-  const weekScores = [42, 44, 48, 55, 63, 71, score];
+  // Week sparkline: prefer Tonewatch daily tone (×10) when present, else synthetic.
+  const weekScores = weekScoresFromTone(toneDays, score);
 
   return {
     timestamp: now,
@@ -124,15 +143,32 @@ export function computeStressSnapshot(
     confidence,
     physiologicalSignal: phys.score,
     languageSignal,
+    messagingSignal,
     contextSignal,
     contributingFactors,
-    primaryTheme: topTopic?.topic ?? null,
+    primaryTheme: topTopic?.topic ?? latestTone?.dominant_emotions?.[0] ?? null,
     uncertainty:
       'These signals may be related but do not establish causation. This is a pattern, not a diagnosis.',
     metricDeviations: phys.deviations,
     languageChangePct,
+    messagingChangePct: msgChangePct,
     weekScores,
+    latestTone,
   };
+}
+
+function weekScoresFromTone(toneDays: TonewatchDay[], fallbackScore: number): number[] {
+  const scored = toneDays
+    .filter((d) => d.stress_score != null)
+    .sort((a, b) => a.day.localeCompare(b.day))
+    .slice(-7);
+  if (scored.length >= 4) {
+    const mapped = scored.map((d) => Math.round(((d.stress_score as number) / 10) * 100));
+    while (mapped.length < 7) mapped.unshift(mapped[0] ?? 40);
+    mapped[mapped.length - 1] = fallbackScore;
+    return mapped.slice(-7);
+  }
+  return [42, 44, 48, 55, 63, 71, fallbackScore];
 }
 
 /** Structured “LLM” insight — deterministic prototype for demo; swap for real LLM later. */
@@ -144,6 +180,14 @@ export function buildInsight(
   const supporting = snapshot.contributingFactors.slice(0, 4);
 
   const heardThemes = extractThemesFromText(latestTranscript ?? '');
+  const toneEmotions = (snapshot.latestTone?.dominant_emotions ?? [])
+    .slice(0, 2)
+    .map((e) => e.charAt(0).toUpperCase() + e.slice(1));
+
+  const fallbackThemes =
+    toneEmotions.length > 0
+      ? [...toneEmotions, 'Rising pressure from texts + body signals'].slice(0, 3)
+      : ['Deadline pressure', 'Avoidance', 'Uncertainty about where to start'];
 
   return {
     stressSignal: snapshot.score,
@@ -154,9 +198,7 @@ export function buildInsight(
       : ['Signals differ from your recent personal baseline'],
     uncertainty: snapshot.uncertainty,
     recommendedAction: theme.includes('deadline') ? 'plan' : 'unpack',
-    heardThemes: heardThemes.length
-      ? heardThemes
-      : ['Deadline pressure', 'Avoidance', 'Uncertainty about where to start'],
+    heardThemes: heardThemes.length ? heardThemes : fallbackThemes,
   };
 }
 

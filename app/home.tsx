@@ -67,7 +67,14 @@ export default function HomeScreen() {
             pct={Math.max(8, snapshot.languageChangePct)}
             tone="up"
           />
-
+          <BarRow
+            label="Message tone"
+            pct={Math.max(8, Math.abs(snapshot.messagingChangePct))}
+            tone={snapshot.messagingChangePct >= 0 ? 'up' : 'down'}
+          />
+          {snapshot.latestTone?.flags?.[0] ? (
+            <Text style={styles.toneNote}>{snapshot.latestTone.flags[0]}</Text>
+          ) : null}
           <SectionLabel>What might be related?</SectionLabel>
           <View style={styles.related}>
             <Text style={styles.relatedTitle}>
@@ -170,5 +177,13 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: colors.muted,
     marginTop: 4,
+  },
+  toneNote: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.muted,
+    marginTop: -4,
+    marginBottom: spacing.sm,
   },
 });
