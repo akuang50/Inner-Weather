@@ -21,21 +21,15 @@ Requires Node (this repo pins `nodejs 25.4.0` via `.tool-versions` for asdf).
 
 ### Live site on GitHub Pages
 
-After you enable Pages (one-time) and push to `main`, the app deploys automatically:
-
 **https://akuang50.github.io/Inner-Weather/**
 
+One-time setup (if the site still shows the README):
+
 1. Repo → **Settings** → **Pages**
-2. Under **Build and deployment**, set Source to **GitHub Actions**
-3. Push to `main` (or run the **Deploy GitHub Pages** workflow manually)
+2. Source: **Deploy from a branch**
+3. Branch: **`gh-pages`** / **`/`** (root) → Save
 
-Local static build:
-
-```bash
-npm run export:web
-```
-
-Output lands in `dist/`.
+Then every push to `main` rebuilds and updates that URL.
 
 ## Demo path (2–3 min)
 
