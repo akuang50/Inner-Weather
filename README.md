@@ -1,5 +1,4 @@
 # Inner Weather
-<<<<<<< HEAD
 
 **Your personal early-warning system for stress.**
 
@@ -10,14 +9,11 @@ It compares you to **your own baseline** — not a population average — and co
 ## Quick start
 
 ```bash
-cd /Users/amy/mit/mithacks26/Inner-Weather
 npm install
 npm run web
 ```
 
 Then open [http://localhost:8081](http://localhost:8081) (or press `i` for iOS / scan with Expo Go).
-
-Requires Node (this repo pins `nodejs 25.4.0` via `.tool-versions` for asdf).
 
 ### Live site on GitHub Pages
 
@@ -30,6 +26,10 @@ One-time setup (if the site still shows the README):
 3. Branch: **`gh-pages`** / **`/`** (root) → Save
 
 Then every push to `main` rebuilds and updates that URL.
+
+```bash
+npm run export:web   # local static build → dist/
+```
 
 ## Demo path (2–3 min)
 
@@ -91,5 +91,3 @@ Mobile UI (Expo)
 ## Safety
 
 This is a wellness / self-reflection prototype. It does **not** diagnose conditions, assess clinical risk, or replace professional care.
-=======
->>>>>>> 16561bb377a5c9c60ecc368b3ab4de2e88a37a43
