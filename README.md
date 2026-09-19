@@ -28,9 +28,38 @@ Sign in or register on the site to get **per-user** health logs and journals. Cr
 
 **Demo account:** `demo@innerweather.app` / `demo12345` — or use **Continue as demo** / **Try demo account** in the UI.
 
+### Stress coach chat
+
+After sign-in, open **Coach** (`#coach`) on the landing site to start a chatting session. The coach:
+
+- Uses your **tracker baseline**, health logs, and journal themes for context  
+- Scores **stress signals in each message** and shifts tone when language looks elevated (warm → gentle → grounding)  
+- Suggests **destress steps** (breathing, one small action, validation-first replies)  
+- **Debriefs** when you end the session and **stores transcripts + summaries** in localStorage  
+- Recalls **memory snippets** from past sessions in future chats  
+
+With an [xAI](https://x.ai/) API key (env `VITE_XAI_API_KEY` or saved in the Track section), replies and debriefs use Grok; otherwise the same flow runs on local heuristics.
+
+| Site feature | Path |
+|--------------|------|
+| Sign-in / demo auth | `site/src/lib/auth.ts` |
+| Per-user tracker storage | `site/src/lib/storage.ts` |
+| Coach logic + debrief | `site/src/lib/chatCoach.ts` |
+| Chat UI | `site/src/components/StressCoachChat.tsx` |
+
 The Expo app under `app/` remains for the mobile prototype.
 
 ## Demo path (2–3 min)
+
+**Landing site (signed in or demo account)**
+
+1. **Explore** → personal baseline + fused stress signal  
+2. **Voice / journal** → language analysis on what you share  
+3. **Coach** → short chat session, stress-aware replies, end with debrief  
+4. **Track** → log sleep / HR / steps; optional Grok key  
+5. **Replay + explainability** → how signals moved over the week  
+
+**Expo mobile prototype**
 
 1. **Onboarding** → continue with demo health data  
 2. **Home** → elevated stress signal + what changed  
@@ -83,6 +112,7 @@ Mobile UI (Expo)
 - Deterministic baseline / stress fusion (experimental weights)  
 - Local language heuristics standing in for STT + LLM  
 - Signature hold-to-talk rant UI  
+- Per-user sign-in + **stress coach chat** with session history (browser-local)  
 
 **Next for the hackathon**
 
