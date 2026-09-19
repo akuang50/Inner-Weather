@@ -62,3 +62,47 @@ export type TrackerState = {
   journals: JournalEntry[]
   seeded: boolean
 }
+
+export type CoachTone = 'warm' | 'gentle' | 'grounding' | 'encouraging'
+
+export type MessageStressSnapshot = {
+  score: number
+  urgency: number
+  overwhelm: number
+  uncertainty: number
+  negativity: number
+  elevated: boolean
+  themes: string[]
+}
+
+export type ChatMessage = {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: string
+  stress?: MessageStressSnapshot
+  coachTone?: CoachTone
+}
+
+export type ChatSessionDebrief = {
+  summary: string
+  stressArc: string
+  whatHelped: string[]
+  followUp: string
+  peakStress: number
+  memorySnippet: string
+}
+
+export type ChatSessionRecord = {
+  id: string
+  startedAt: string
+  endedAt?: string
+  status: 'active' | 'completed'
+  messages: ChatMessage[]
+  debrief?: ChatSessionDebrief
+}
+
+export type ChatStore = {
+  sessions: ChatSessionRecord[]
+  activeSessionId: string | null
+}

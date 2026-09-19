@@ -5,6 +5,7 @@ import type { AuthUser } from '../lib/auth'
 
 const links = [
   { href: '#demo', label: 'Explore' },
+  { href: '#coach', label: 'Coach' },
   { href: '#track', label: 'Track' },
   { href: '#how', label: 'How it works' },
 ]

@@ -27,6 +27,45 @@ export function grokConfigured() {
   return !!getXaiApiKey()
 }
 
+type ChatCompletionMessage = {
+  role: 'system' | 'user' | 'assistant'
+  content: string
+}
+
+export async function completeWithGrok(params: {
+  system: string
+  messages: ChatCompletionMessage[]
+  temperature?: number
+  json?: boolean
+}): Promise<string | null> {
+  const key = getXaiApiKey()
+  if (!key) return null
+
+  const res = await fetch('https://api.x.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${key}`,
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      temperature: params.temperature ?? 0.5,
+      ...(params.json ? { response_format: { type: 'json_object' } } : {}),
+      messages: [{ role: 'system', content: params.system }, ...params.messages],
+    }),
+  })
+
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`Grok API ${res.status}: ${errText.slice(0, 200)}`)
+  }
+
+  const data = (await res.json()) as {
+    choices?: { message?: { content?: string } }[]
+  }
+  return data.choices?.[0]?.message?.content?.trim() ?? null
+}
+
 type GrokAnalysisResult = {
   analysis: LanguageAnalysis
   reflection: string

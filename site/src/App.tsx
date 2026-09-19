@@ -13,6 +13,8 @@ import { HowItWorks } from './components/HowItWorks'
 import { PrivacySection } from './components/PrivacySection'
 import { FinalCTA, Footer } from './components/FinalCTA'
 import { LoginModal, SignInPrompt } from './components/LoginModal'
+import { StressCoachChat } from './components/StressCoachChat'
+import { ChatProvider } from './state/ChatProvider'
 
 function TrackerDemo({ onSignIn, onDemo }: { onSignIn: () => void; onDemo: () => void }) {
   const { authenticated, ready } = useTracker()
@@ -33,6 +35,7 @@ function TrackerDemo({ onSignIn, onDemo }: { onSignIn: () => void; onDemo: () =>
     <>
       <SignalExplorer />
       <VoiceJournal />
+      <StressCoachChat />
       <HealthLogger />
       <div className="section-rule mx-auto max-w-6xl" />
       <StressReplay />
@@ -82,7 +85,9 @@ export default function App() {
   return (
     <AuthProvider>
       <TrackerProvider>
-        <Shell />
+        <ChatProvider>
+          <Shell />
+        </ChatProvider>
       </TrackerProvider>
     </AuthProvider>
   )
