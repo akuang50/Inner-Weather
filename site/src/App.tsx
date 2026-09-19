@@ -14,15 +14,17 @@ import { FinalCTA, Footer } from './components/FinalCTA'
 export default function App() {
   return (
     <TrackerProvider>
-      <div className="min-h-screen bg-bg text-ink">
+      <div className="site-shell min-h-screen text-ink">
         <Navbar />
         <main>
           <Hero />
+          <div className="section-rule mx-auto max-w-6xl" />
           <div id="demo">
             <SignalExplorer />
           </div>
           <VoiceJournal />
           <HealthLogger />
+          <div className="section-rule mx-auto max-w-6xl" />
           <StressReplay />
           <BaselineSection />
           <ExplainabilityCard />

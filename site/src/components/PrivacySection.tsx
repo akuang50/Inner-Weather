@@ -24,7 +24,7 @@ export function PrivacySection() {
     <Section dark className="py-24 md:py-32">
       <Reveal>
         <Eyebrow light>Privacy</Eyebrow>
-        <h2 className="mt-4 max-w-2xl text-4xl font-semibold tracking-tight md:text-5xl">
+        <h2 className="font-display mt-4 max-w-2xl text-4xl tracking-tight md:text-5xl">
           Your most personal data deserves more than a checkbox.
         </h2>
       </Reveal>

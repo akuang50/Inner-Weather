@@ -15,7 +15,9 @@ export function Section({
   return (
     <section
       id={id}
-      className={`relative px-6 md:px-10 lg:px-16 ${dark ? 'bg-dark text-white' : ''} ${className}`}
+      className={`relative px-6 md:px-10 lg:px-16 ${
+        dark ? 'bg-gradient-to-b from-dark to-dark-soft text-white' : ''
+      } ${className}`}
     >
       <div className="mx-auto w-full max-w-6xl">{children}</div>
     </section>
@@ -35,10 +37,10 @@ export function Reveal({
   return (
     <motion.div
       className={className}
-      initial={reduce ? false : { opacity: 0, y: 28 }}
+      initial={reduce ? false : { opacity: 0, y: 24 }}
       whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-80px' }}
-      transition={{ duration: 0.7, ease: 'easeOut', delay }}
+      transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1], delay }}
     >
       {children}
     </motion.div>
@@ -48,13 +50,25 @@ export function Reveal({
 export function Eyebrow({ children, light = false }: { children: ReactNode; light?: boolean }) {
   return (
     <p
-      className={`text-[11px] font-semibold tracking-[0.18em] uppercase ${
-        light ? 'text-white/50' : 'text-muted'
+      className={`text-[11px] font-semibold tracking-[0.2em] uppercase ${
+        light ? 'text-white/45' : 'text-muted'
       }`}
     >
       {children}
     </p>
   )
+}
+
+export function Display({
+  children,
+  className = '',
+  as: Tag = 'h2',
+}: {
+  children: ReactNode
+  className?: string
+  as?: 'h1' | 'h2' | 'h3' | 'p'
+}) {
+  return <Tag className={`font-display ${className}`}>{children}</Tag>
 }
 
 export function Bar({
@@ -71,13 +85,13 @@ export function Bar({
     ai: 'bg-ai',
   }
   return (
-    <div className="h-2 w-full overflow-hidden rounded-full bg-black/5">
+    <div className="h-2 w-full overflow-hidden rounded-full bg-black/[0.05]">
       <motion.div
         className={`h-full rounded-full ${colors[tone]}`}
         initial={{ width: 0 }}
         whileInView={{ width: `${Math.min(100, Math.max(6, value))}%` }}
         viewport={{ once: true }}
-        transition={{ duration: 0.9, ease: 'easeOut' }}
+        transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
       />
     </div>
   )
