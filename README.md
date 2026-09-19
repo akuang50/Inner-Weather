@@ -6,30 +6,23 @@ Inner Weather (product concept: Stress Monitor) is a HackMIT prototype that dete
 
 It compares you to **your own baseline** — not a population average — and connects body signals with language without claiming medical causation.
 
-## Quick start
+## Landing site (HackMIT demo)
+
+The award-style product demo lives in [`site/`](site/):
 
 ```bash
+cd site
 npm install
-npm run web
+npm run dev
 ```
 
-Then open [http://localhost:8081](http://localhost:8081) (or press `i` for iOS / scan with Expo Go).
-
-### Live site on GitHub Pages
+Open the printed localhost URL. GitHub Pages deploys this Vite build to:
 
 **https://akuang50.github.io/Inner-Weather/**
 
-One-time setup (if the site still shows the README):
+(Pages source should be the `gh-pages` branch.)
 
-1. Repo → **Settings** → **Pages**
-2. Source: **Deploy from a branch**
-3. Branch: **`gh-pages`** / **`/`** (root) → Save
-
-Then every push to `main` rebuilds and updates that URL.
-
-```bash
-npm run export:web   # local static build → dist/
-```
+The Expo app under `app/` remains for the mobile prototype.
 
 ## Demo path (2–3 min)
 
