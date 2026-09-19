@@ -1,4 +1,5 @@
 # Inner Weather
+<<<<<<< HEAD
 
 **Your personal early-warning system for stress.**
 
@@ -78,3 +79,5 @@ Mobile UI (Expo)
 ## Safety
 
 This is a wellness / self-reflection prototype. It does **not** diagnose conditions, assess clinical risk, or replace professional care.
+=======
+>>>>>>> 16561bb377a5c9c60ecc368b3ab4de2e88a37a43
