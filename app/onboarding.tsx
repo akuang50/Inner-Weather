@@ -11,19 +11,19 @@ const STEPS = [
   {
     eyebrow: 'Inner Weather',
     title: 'Your body and your words share a weather system.',
-    body: 'Most apps show metrics or vibes. We detect when they drift from your personal baseline — together.',
+    body: 'Most apps show metrics or vibes. We notice when they drift from your personal baseline — together.',
     cta: 'Show me',
   },
   {
     eyebrow: 'Personal baseline',
     title: 'Not vs other 21-year-olds. Vs you last week.',
-    body: 'Demo health data is loaded for Alex: sleep, resting HR, HRV, steps — normalized to a rolling personal baseline.',
+    body: 'Demo health data is loaded for Alex: sleep, resting HR, HRV, steps — each compared to a rolling personal baseline.',
     cta: 'Continue',
   },
   {
-    eyebrow: 'Privacy',
-    title: 'Reflection, not diagnosis.',
-    body: 'We explain co-occurrence with uncertainty. Your journals stay yours. This never claims medical causation.',
+    eyebrow: 'Reflection, not diagnosis',
+    title: 'We explain co-occurrence. We do not name a condition.',
+    body: 'If body, language, and context move together, we surface the pattern — with uncertainty, never medical causation.',
     cta: 'Enter Inner Weather',
   },
 ] as const;
@@ -34,11 +34,16 @@ export default function OnboardingScreen() {
   const { completeOnboarding, connectHealth } = useApp();
   const current = STEPS[step]!;
 
+  const enter = (href: '/home' | '/fuse' = '/home') => {
+    connectHealth();
+    completeOnboarding();
+    router.replace(href);
+  };
+
   const advance = () => {
     if (step === 1) connectHealth();
     if (step >= STEPS.length - 1) {
-      completeOnboarding();
-      router.replace('/home');
+      enter('/home');
       return;
     }
     setStep((s) => s + 1);
@@ -62,14 +67,11 @@ export default function OnboardingScreen() {
             </View>
             <Button label={current.cta} onPress={advance} />
             <Button
-              label="Skip to the fuse"
-              variant="ghost"
-              onPress={() => {
-                connectHealth();
-                completeOnboarding();
-                router.replace('/fuse');
-              }}
+              label="Start 2-min judge demo"
+              variant="soft"
+              onPress={() => enter('/home')}
             />
+            <Button label="Skip to live fuse" variant="ghost" onPress={() => enter('/fuse')} />
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -88,9 +90,9 @@ const styles = StyleSheet.create({
   },
   brand: {
     fontFamily: 'Fraunces_600SemiBold',
-    fontSize: 34,
+    fontSize: 28,
     color: colors.primary,
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
   },
   hero: {
     marginTop: spacing.xxl,
@@ -98,31 +100,32 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     fontFamily: 'DMSans_600SemiBold',
-    fontSize: 12,
+    fontSize: 11,
     letterSpacing: 1.8,
     textTransform: 'uppercase',
     color: colors.muted,
   },
   title: {
     fontFamily: 'Fraunces_600SemiBold',
-    fontSize: 36,
-    lineHeight: 42,
+    fontSize: 34,
+    lineHeight: 40,
     color: colors.primary,
-    letterSpacing: -0.8,
+    letterSpacing: -0.7,
   },
   body: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 18,
-    lineHeight: 28,
+    fontSize: 17,
+    lineHeight: 26,
     color: 'rgba(21,23,26,0.72)',
     maxWidth: 360,
   },
   footer: {
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   dots: {
     flexDirection: 'row',
     gap: 8,
+    marginBottom: 6,
   },
   dot: {
     width: 8,

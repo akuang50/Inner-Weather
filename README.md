@@ -16,11 +16,18 @@ npm install
 npm run dev
 ```
 
-Open the printed localhost URL. GitHub Pages deploys this Vite build to:
+Open the printed localhost URL. GitHub Pages deploys the landing plus the Expo web app:
 
-**https://akuang50.github.io/Inner-Weather/**
+- Landing: **https://akuang50.github.io/Inner-Weather/**
+- Live app (2-min judge path): **https://akuang50.github.io/Inner-Weather/app/**
 
 (Pages source should be the `gh-pages` branch.)
+
+```bash
+# Expo web app (device-framed on desktop)
+npm install
+npm run web
+```
 
 ### Accounts (demo)
 
@@ -28,15 +35,15 @@ Sign in or register on the site to get **per-user** health logs and journals. Cr
 
 **Demo account:** `demo@innerweather.app` / `demo12345` — or use **Continue as demo** / **Try demo account** in the UI.
 
-The Expo app under `app/` remains for the mobile prototype.
+The Expo app under `app/` is the product UI (also exported to `/app/` on Pages). On the first onboarding screen, **Start 2-min judge demo** skips ahead with Alex’s seeded week.
 
 ## Demo path (2–3 min)
 
-1. **Onboarding** → continue with demo health data  
-2. **Home** → elevated stress signal + what changed  
-3. **Tell me what’s going on** → hold the rant button (uses a demo transcript + local analysis)  
+1. **Onboarding** → Start 2-min judge demo (or walk the three beats)  
+2. **Home** → stress signal vs personal baseline + body / words / texts / context  
+3. **Tell me what’s going on** → hold to talk (web speech when available) or type  
 4. **Insight** → themes + cross-modal chain  
-5. **Why?** / **Actions** / **Stress Replay**
+5. **Stress Replay** → scrub the week for co-occurrence, then a lightweight next step
 
 ## Architecture
 

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FusionDiagram } from '../src/components/FusionDiagram';
@@ -28,59 +29,70 @@ export default function ReplayScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.fill}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Button label="Back" variant="ghost" onPress={() => router.back()} />
-        <Text style={styles.title}>Stress Replay</Text>
-        <Text style={styles.sub}>
-          Scrub the week. Watch when body and language co-occur — that’s the anomaly.
-        </Text>
+    <LinearGradient colors={['#F7F8FA', '#F3EFEA']} style={styles.fill}>
+      <SafeAreaView style={styles.fill}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <Button label="Back" variant="ghost" onPress={() => router.back()} />
+          <Text style={styles.title}>Stress Replay</Text>
+          <Text style={styles.sub}>
+            Scrub the week. Linked days are when body and language moved together — a personal
+            anomaly, not a diagnosis.
+          </Text>
 
-        <View style={styles.timeline}>
-          {series.map((p, i) => (
-            <Pressable key={p.date} onPress={() => setSelected(i)} style={styles.col}>
-              <Text style={[styles.day, i === selected && styles.dayOn]}>{p.label}</Text>
-              <View style={styles.lineWrap}>
-                <View style={styles.line} />
-                <View
-                  style={[
-                    styles.dot,
-                    { top: 44 - (p.score / 100) * 40 },
-                    i === selected && styles.dotOn,
-                    p.coOccurrence && styles.dotLink,
-                  ]}
-                />
-              </View>
-              {p.coOccurrence && <Text style={styles.anno}>linked</Text>}
-            </Pressable>
-          ))}
-        </View>
+          <View style={styles.timeline}>
+            {series.map((p, i) => {
+              const h = 18 + (p.score / 100) * 72;
+              const on = i === selected;
+              return (
+                <Pressable key={p.date} onPress={() => setSelected(i)} style={styles.col}>
+                  <View style={styles.barTrack}>
+                    <View
+                      style={[
+                        styles.bar,
+                        {
+                          height: h,
+                          backgroundColor: p.coOccurrence
+                            ? colors.stress
+                            : on
+                              ? colors.primary
+                              : 'rgba(21,23,26,0.18)',
+                        },
+                      ]}
+                    />
+                  </View>
+                  <Text style={[styles.day, on && styles.dayOn]}>{p.label}</Text>
+                  {p.coOccurrence ? <Text style={styles.anno}>linked</Text> : <Text style={styles.anno}> </Text>}
+                </Pressable>
+              );
+            })}
+          </View>
 
-        <Text style={styles.scoreLine}>
-          {point.label} · signal {point.score}
-          {point.coOccurrence ? ' · co-occurrence' : ''}
-        </Text>
+          <Text style={styles.scoreLine}>
+            {point.label} · signal {point.score}
+            {point.coOccurrence ? ' · co-occurrence' : ''}
+          </Text>
 
-        <FusionDiagram
-          body={point.bodyScore}
-          language={point.languageScore}
-          context={point.contextScore}
-          linked={point.coOccurrence}
-        />
+          <FusionDiagram
+            body={point.bodyScore}
+            language={point.languageScore}
+            context={point.contextScore}
+            linked={point.coOccurrence}
+          />
 
-        <Panel title="Body" body={point.narrative.body} />
-        <Panel title="Language" body={point.narrative.language} />
-        <Panel title="Context" body={point.narrative.context} />
-        <Panel title="Fusion" body={point.narrative.fusion} />
+          <Panel title="Body" body={point.narrative.body} />
+          <Panel title="Language" body={point.narrative.language} />
+          <Panel title="Context" body={point.narrative.context} />
+          <Panel title="Fusion" body={point.narrative.fusion} />
 
-        {point.journalSnippet && (
-          <>
-            <Text style={styles.quoteLabel}>From that day</Text>
-            <Text style={styles.quote}>“{point.journalSnippet}”</Text>
-          </>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+          {point.journalSnippet ? (
+            <>
+              <Text style={styles.quoteLabel}>From that day</Text>
+              <Text style={styles.quote}>“{point.journalSnippet}”</Text>
+            </>
+          ) : null}
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
@@ -94,8 +106,8 @@ function Panel({ title, body }: { title: string; body: string }) {
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  fill: { flex: 1 },
+  content: { padding: spacing.lg, paddingBottom: spacing.cue },
   title: {
     fontFamily: 'Fraunces_600SemiBold',
     fontSize: 34,
@@ -112,52 +124,38 @@ const styles = StyleSheet.create({
   timeline: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-end',
     marginBottom: spacing.lg,
-    minHeight: 120,
+    minHeight: 140,
+    gap: 4,
   },
   col: { alignItems: 'center', flex: 1 },
+  barTrack: {
+    height: 96,
+    width: '70%',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  bar: {
+    width: '100%',
+    maxWidth: 28,
+    borderRadius: 10,
+  },
   day: {
+    marginTop: 8,
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 11,
     letterSpacing: 1,
     color: colors.muted,
-    marginBottom: 8,
   },
   dayOn: { color: colors.primary },
-  lineWrap: {
-    height: 52,
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  line: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: colors.border,
-    top: 24,
-  },
-  dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: 'rgba(21,23,26,0.25)',
-    position: 'absolute',
-  },
-  dotOn: {
-    backgroundColor: colors.primary,
-    transform: [{ scale: 1.15 }],
-  },
-  dotLink: {
-    backgroundColor: colors.stress,
-  },
   anno: {
-    marginTop: 8,
+    marginTop: 4,
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 10,
     color: colors.stress,
     textAlign: 'center',
+    minHeight: 14,
   },
   scoreLine: {
     fontFamily: 'Fraunces_500Medium',

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTracker } from '../state/TrackerProvider'
 import { useAuth } from '../state/AuthProvider'
 import type { AuthUser } from '../lib/auth'
+import { liveAppUrl } from '../lib/paths'
 
 const links = [
   { href: '#demo', label: 'Explore' },
@@ -46,6 +47,9 @@ export function Navbar({
           <span className="font-display text-lg tracking-tight text-ink">Stress Monitor</span>
         </a>
         <div className="hidden items-center gap-5 md:flex">
+          <a href={liveAppUrl} className="text-sm text-muted transition hover:text-ink">
+            App
+          </a>
           {links.map((l) => (
             <a
               key={l.href}
@@ -75,8 +79,8 @@ export function Navbar({
               >
                 Sign out
               </button>
-              <a href="#voice" className="btn-primary !px-4 !py-2 text-sm">
-                Talk now
+              <a href={liveAppUrl} className="btn-primary !px-4 !py-2 text-sm">
+                Live app
               </a>
             </>
           ) : (

@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
   fill: { flex: 1, backgroundColor: colors.background },
   content: {
     padding: spacing.lg,
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.cue,
   },
   title: {
     fontFamily: 'Fraunces_600SemiBold',

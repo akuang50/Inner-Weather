@@ -15,9 +15,6 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: site
     steps:
       - uses: actions/checkout@v4
 
@@ -25,18 +22,52 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: site/package-lock.json
+          cache-dependency-path: "**/package-lock.json"
 
-      - name: Install
+      - name: Install landing
+        working-directory: site
         run: npm ci
 
-      - name: Build landing site
+      - name: Build landing
+        working-directory: site
         run: npm run build
         env:
           GITHUB_PAGES: "1"
 
-      - name: SPA fallback
-        run: cp dist/index.html dist/404.html
+      - name: Install Expo app
+        run: npm ci --legacy-peer-deps
+
+      - name: Export Expo web
+        run: npm run export:web
+        env:
+          EXPO_NO_TYPED_ROUTES: "1"
+          GITHUB_PAGES: "1"
+
+      - name: Nest app under /app and SPA fallbacks
+        run: |
+          mkdir -p site/dist/app
+          cp -R dist/. site/dist/app/
+          cp site/dist/app/index.html site/dist/app/404.html
+          cat > site/dist/404.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+            <head>
+              <meta charset="utf-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1" />
+              <title>Inner Weather</title>
+              <script>
+                (function () {
+                  var base = '/Inner-Weather';
+                  var path = location.pathname;
+                  var dest = path.indexOf(base + '/app') === 0 ? base + '/app/' : base + '/';
+                  location.replace(dest + location.search + location.hash);
+                })();
+              </script>
+            </head>
+            <body></body>
+          </html>
+          EOF
+          touch site/dist/.nojekyll
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4

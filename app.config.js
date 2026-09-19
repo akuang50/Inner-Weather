@@ -46,7 +46,7 @@ const config = {
   },
   experiments: {
     typedRoutes: false,
-    ...(forGitHubPages ? { baseUrl: '/Inner-Weather' } : {}),
+    ...(forGitHubPages ? { baseUrl: '/Inner-Weather/app' } : {}),
   },
 };
 
