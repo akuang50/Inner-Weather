@@ -15,6 +15,9 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
     steps:
       - uses: actions/checkout@v4
 
@@ -22,22 +25,22 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: site/package-lock.json
 
       - name: Install
-        run: npm ci --legacy-peer-deps
+        run: npm ci
 
-      - name: Export web
-        run: npm run export:web
+      - name: Build landing site
+        run: npm run build
         env:
-          EXPO_NO_TYPED_ROUTES: "1"
           GITHUB_PAGES: "1"
 
-      - name: SPA fallback for client routes
+      - name: SPA fallback
         run: cp dist/index.html dist/404.html
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          publish_dir: ./site/dist
           force_orphan: true
