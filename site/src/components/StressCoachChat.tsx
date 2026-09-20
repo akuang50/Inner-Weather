@@ -18,19 +18,7 @@ function toneBadge(tone: CoachTone | undefined) {
   )
 }
 
-function StressPill({ score }: { score: number }) {
-  const level = score >= 65 ? 'elevated' : score >= 45 ? 'changing' : 'calm'
-  const colors = {
-    elevated: 'bg-elevated/15 text-elevated',
-    changing: 'bg-changing/20 text-amber-900',
-    calm: 'bg-calm/15 text-emerald-900',
-  }
-  return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] tabular-nums ${colors[level]}`}>
-      stress {score}
-    </span>
-  )
-}
+
 
 function SessionList({
   sessions,
@@ -65,9 +53,8 @@ function SessionList({
             <button
               type="button"
               onClick={() => onSelect(s.status === 'active' ? null : s.id)}
-              className={`w-full rounded-xl border px-3 py-2 text-left transition ${
-                selected ? 'border-ink/20 bg-white shadow-sm' : 'border-border bg-bg/80 hover:bg-white'
-              }`}
+              className={`w-full rounded-xl border px-3 py-2 text-left transition ${selected ? 'border-ink/20 bg-white shadow-sm' : 'border-border bg-bg/80 hover:bg-white'
+                }`}
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-medium text-ink">{label}</span>
@@ -98,9 +85,8 @@ function MessageList({
 
   return (
     <div
-      className={`flex max-h-[min(420px,50vh)] flex-col gap-3 overflow-y-auto rounded-2xl border border-border bg-bg/50 p-4 ${
-        readOnly ? 'opacity-95' : ''
-      }`}
+      className={`flex max-h-[min(420px,50vh)] flex-col gap-3 overflow-y-auto rounded-2xl border border-border bg-bg/50 p-4 ${readOnly ? 'opacity-95' : ''
+        }`}
     >
       {session.messages.map((m) => (
         <div
@@ -108,16 +94,14 @@ function MessageList({
           className={`flex flex-col gap-1 ${m.role === 'user' ? 'items-end' : 'items-start'}`}
         >
           <div
-            className={`max-w-[92%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-              m.role === 'user'
-                ? 'bg-ink text-white'
-                : 'surface-solid border border-border text-ink'
-            }`}
+            className={`max-w-[92%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${m.role === 'user'
+              ? 'bg-ink text-white'
+              : 'surface-solid border border-border text-ink'
+              }`}
           >
             {m.content}
           </div>
           <div className="flex flex-wrap items-center gap-2 px-1">
-            {m.role === 'user' && m.stress ? <StressPill score={m.stress.score} /> : null}
             {m.role === 'assistant' ? toneBadge(m.coachTone) : null}
           </div>
         </div>
