@@ -1,44 +1,22 @@
-# from dotenv import load_dotenv, find_dotenv
-# import os
-# import requests
-# from pydantic import BaseModel
-# from openai import OpenAI
+"""
+server/chatbot.py
 
-# load_dotenv()
+Receives chat messages from the React app, sends them to the Meta model,
+processes the output, and returns JSON that ChatProvider.tsx can store.
 
-# META_API_KEY = os.getenv("META_API_KEY")
+Run from the server/ folder:
+    pip install fastapi uvicorn openai python-dotenv
+    uvicorn chatbot:app --reload --port 8000
+"""
 
-# client = OpenAI(
-#     base_url="https://api.meta.ai/v1",
-#     api_key=META_API_KEY,
-# )
-
-# response = client.responses.create(
-#     model="muse-spark-1.3",
-#     input="What is the capital of France?",
-# )
-
-# print(response.model_dump_json(indent=2))
-
-
-# """
-# server/chatbot.py
-
-# Receives chat messages from the React app, sends them to the Meta model,
-# processes the output, and returns JSON that ChatProvider.tsx can store.
-
-# Run from the server/ folder:
-#     pip install fastapi uvicorn openai python-dotenv
-#     uvicorn chatbot:app --reload --port 8000
-# """
-
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 import os
 import re
 from typing import Literal
 
 from dotenv import find_dotenv, load_dotenv
 from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
 from pydantic import BaseModel, Field
 
@@ -48,24 +26,13 @@ META_API_KEY = os.getenv("META_API_KEY")
 if not META_API_KEY:
     raise RuntimeError("META_API_KEY not found. Check your .env file.")
 
-# Model id for Meta's OpenAI-compatible Responses API (override in .env).
+# Copy the exact base URL and model name from Meta's docs if these differ.
+META_BASE_URL = os.getenv("META_BASE_URL", "https://api.meta.ai/v1")
 META_MODEL = os.getenv("META_MODEL", "muse-spark-1.3")
 
-client = OpenAI(base_url="https://api.meta.ai/v1", api_key=META_API_KEY)
+client = OpenAI(base_url=META_BASE_URL, api_key=META_API_KEY)
 
 app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:5173",
-        "http://localhost:5173",
-        "http://127.0.0.1:5174",
-        "http://localhost:5174",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 CoachTone = Literal["warm", "gentle", "grounding", "encouraging"]
 
@@ -178,3 +145,13 @@ def coach(req: CoachRequest):
         "coach_tone": req.tone,
         "model": META_MODEL,
     }
+
+
+# ---------- Serve the built website (production only) ----------
+# Must stay at the very bottom so the /api routes above take priority.
+# In dev, site/dist doesn't exist and Vite serves the frontend instead.
+
+
+DIST = Path(__file__).resolve().parent.parent / "site" / "dist"
+if DIST.exists():
+    app.mount("/", StaticFiles(directory=DIST, html=True), name="site")
