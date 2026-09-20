@@ -15,15 +15,15 @@ export default function ReplayScreen() {
 
   if (!point) {
     return (
-      <SafeAreaView style={styles.fill}>
+      <SafeAreaView style={styles.fill} edges={['top']}>
         <Text style={{ padding: 24 }}>No timeline yet.</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.fill}>
-      <ScrollView contentContainerStyle={styles.content}>
+    <SafeAreaView style={styles.fill} edges={['top']}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.eyebrow}>Stress Replay</Text>
         <Text style={styles.title}>See your week differently.</Text>
         <Text style={styles.sub}>Built from your stored health logs and journals.</Text>

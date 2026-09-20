@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Platform, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts, Fraunces_500Medium, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
 import {
@@ -52,12 +52,26 @@ export default function RootLayout() {
     );
   }
 
+  const shellStyle =
+    Platform.OS === 'web'
+      ? {
+          flex: 1,
+          width: '100%' as const,
+          maxWidth: 430,
+          alignSelf: 'center' as const,
+          backgroundColor: colors.background,
+          overflow: 'hidden' as const,
+        }
+      : { flex: 1 };
+
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <AppProvider>
-        <StatusBar style="dark" />
-        <RootNav />
-      </AppProvider>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.backgroundWarm }}>
+      <View style={shellStyle}>
+        <AppProvider>
+          <StatusBar style="dark" />
+          <RootNav />
+        </AppProvider>
+      </View>
     </GestureHandlerRootView>
   );
 }
