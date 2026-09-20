@@ -15,7 +15,7 @@ export function Hero() {
       <div className="mx-auto grid w-full max-w-6xl items-center gap-14 lg:grid-cols-[1.08fr_0.92fr]">
         <Reveal>
           <p className="font-display text-3xl tracking-tight text-ink md:text-4xl">
-            Stress Monitor
+            Inner Weather
           </p>
           <Eyebrow>A personal stress intelligence system</Eyebrow>
           <h1 className="font-display mt-5 max-w-[12ch] text-[clamp(3rem,8vw,6.1rem)] leading-[0.92] text-ink">

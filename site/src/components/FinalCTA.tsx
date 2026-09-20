@@ -11,7 +11,7 @@ export function FinalCTA() {
           <span className="italic text-ink/55">You need to understand yourself.</span>
         </h2>
         <a href="#demo" className="btn-primary mt-10">
-          Try Stress Monitor
+          Try Inner Weather
         </a>
         <p className="mt-5 text-sm text-muted">Built for HackMIT 2026.</p>
       </Reveal>
@@ -26,7 +26,7 @@ export function Footer() {
         <div>
           <p className="font-display flex items-center gap-2 text-xl tracking-tight">
             <span className="h-2 w-2 rounded-full bg-elevated" />
-            Stress Monitor
+            Inner Weather
           </p>
           <p className="mt-2 text-sm text-muted">Personal stress intelligence.</p>
         </div>

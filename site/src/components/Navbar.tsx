@@ -44,7 +44,7 @@ export function Navbar({
             <span className="absolute inset-0 animate-ping rounded-full bg-elevated/40" />
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-elevated" />
           </span>
-          <span className="font-display text-lg tracking-tight text-ink">Stress Monitor</span>
+          <span className="font-display text-lg tracking-tight text-ink">Inner Weather</span>
         </a>
         <div className="hidden items-center gap-5 md:flex">
           {links.map((l) => (
