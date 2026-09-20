@@ -1,15 +1,17 @@
 export const colors = {
-  background: '#F7F8FA',
-  backgroundWarm: '#F3EFEA',
+  background: '#F7F7F5',
+  backgroundWarm: '#F3F1EC',
   primary: '#15171A',
   stress: '#FF6B6B',
-  calm: '#5BC8A4',
-  insight: '#5B6CFF',
-  muted: '#9AA0A6',
+  calm: '#54C7A2',
+  insight: '#7C83FD',
+  changing: '#F4B860',
+  muted: '#73777D',
   surface: '#FFFFFF',
   surfaceSoft: '#EEF1F4',
-  border: 'rgba(21, 23, 26, 0.08)',
+  border: 'rgba(21, 23, 26, 0.10)',
   white: '#FFFFFF',
+  dark: '#111214',
 } as const;
 
 export const spacing = {
@@ -28,7 +30,6 @@ export const radii = {
   pill: 999,
 } as const;
 
-/** Soften background warmth as stress rises (0–100). */
 export function stressWarmth(score: number): string {
   if (score < 50) return colors.background;
   if (score < 70) return '#F6F4F2';

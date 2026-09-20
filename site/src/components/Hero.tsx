@@ -33,9 +33,13 @@ export function Hero() {
               Try a voice rant
             </a>
           </div>
-          <div className="mt-10 flex items-center gap-4 text-sm text-muted">
-            <span className="inline-flex h-2 w-2 rounded-full bg-calm" />
-            Personal baseline · body + language · explainable
+          <div className="mt-10 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted">
+            <span className="inline-flex items-center gap-2">
+              <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-calm" />
+              Live tracking on this page
+            </span>
+            <span className="hidden h-3 w-px bg-border sm:inline-block" />
+            <span>Personal baseline · body + language · explainable</span>
           </div>
         </Reveal>
 

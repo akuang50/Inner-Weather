@@ -1,89 +1,201 @@
-import React, { createContext, useContext, useMemo, useState, useCallback } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  DEMO_USER,
-  demoAnalyses,
-  demoHealthSignals,
-  demoJournals,
-} from '../data/demoDataset';
-import { analyzeTranscriptLocally, buildInsight, computeStressSnapshot } from '../engine/stress';
-import type {
-  InsightPayload,
-  JournalEntry,
-  LanguageAnalysis,
-  StressSnapshot,
-  UserPreferences,
-} from '../types';
+  bodyDeviation,
+  buildDaySeries,
+  computeStressScore,
+  contextScore,
+  languageDeviation,
+  sleepLabel,
+} from '../lib/baseline';
+import { analyzeWithGrok, clearXaiApiKey, getXaiApiKey, grokConfigured, setXaiApiKey } from '../lib/grok';
+import { clearTracker, loadTracker, saveTracker, seedTracker } from '../lib/storage';
+import type { HealthLog, JournalEntry } from '../lib/trackerTypes';
 
-type AppState = {
-  preferences: UserPreferences;
+const ONBOARDING_KEY = 'stress-monitor-onboarding-v1';
+
+type TrackerContextValue = {
+  ready: boolean;
+  onboardingComplete: boolean;
+  healthLogs: HealthLog[];
   journals: JournalEntry[];
-  analyses: LanguageAnalysis[];
-  snapshot: StressSnapshot;
-  latestInsight: InsightPayload | null;
+  baseline: ReturnType<typeof bodyDeviation>['baseline'];
+  body: ReturnType<typeof bodyDeviation>;
+  language: ReturnType<typeof languageDeviation>;
+  daySeries: ReturnType<typeof buildDaySeries>;
+  stressScore: number;
+  coOccurrence: boolean;
+  realEntryCount: number;
+  grokEnabled: boolean;
+  latestReflection: string | null;
   completeOnboarding: () => void;
-  connectHealth: () => void;
-  addRant: (transcript: string, durationSec: number) => InsightPayload;
+  addJournal: (
+    transcript: string,
+    opts?: { source?: 'voice' | 'typed'; durationSec?: number },
+  ) => Promise<JournalEntry>;
+  logHealth: (input: { sleepHours: number; restingHr: number; steps: number }) => void;
+  resetToSeed: () => void;
+  clearAll: () => void;
+  saveGrokKey: (key: string) => Promise<void>;
+  removeGrokKey: () => Promise<void>;
+  refreshGrokFlag: () => Promise<void>;
 };
 
-const AppContext = createContext<AppState | null>(null);
+const TrackerContext = createContext<TrackerContextValue | null>(null);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [preferences, setPreferences] = useState<UserPreferences>(DEMO_USER.preferences);
-  const [journals, setJournals] = useState(demoJournals);
-  const [analyses, setAnalyses] = useState(demoAnalyses);
-  const [latestInsight, setLatestInsight] = useState<InsightPayload | null>(null);
+  const [ready, setReady] = useState(false);
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [healthLogs, setHealthLogs] = useState<HealthLog[]>([]);
+  const [journals, setJournals] = useState<JournalEntry[]>([]);
+  const [grokEnabled, setGrokEnabled] = useState(false);
+  const [latestReflection, setLatestReflection] = useState<string | null>(null);
 
-  const snapshot = useMemo(
-    () => computeStressSnapshot(demoHealthSignals, analyses),
-    [analyses],
-  );
+  useEffect(() => {
+    (async () => {
+      const [state, onboarded] = await Promise.all([
+        loadTracker(),
+        AsyncStorage.getItem(ONBOARDING_KEY),
+      ]);
+      setHealthLogs(state.healthLogs);
+      setJournals(state.journals);
+      setOnboardingComplete(onboarded === '1');
+      setGrokEnabled(await grokConfigured());
+      setReady(true);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    void saveTracker({ healthLogs, journals, seeded: true });
+  }, [healthLogs, journals, ready]);
+
+  const body = useMemo(() => bodyDeviation(healthLogs), [healthLogs]);
+  const language = useMemo(() => languageDeviation(journals), [journals]);
+  const daySeries = useMemo(() => buildDaySeries(healthLogs, journals, 7), [healthLogs, journals]);
+  const ctx = contextScore(language.current.topics);
+  const stressScore = computeStressScore(body.score, language.score, ctx);
+  const coOccurrence = body.score >= 0.45 && language.score >= 0.45;
+  const realEntryCount =
+    journals.filter((j) => j.source !== 'seed').length +
+    healthLogs.filter((h) => h.source !== 'seed').length;
+
+  const refreshGrokFlag = useCallback(async () => {
+    setGrokEnabled(await grokConfigured());
+  }, []);
 
   const completeOnboarding = useCallback(() => {
-    setPreferences((p) => ({ ...p, onboardingComplete: true, healthConnected: true }));
+    setOnboardingComplete(true);
+    void AsyncStorage.setItem(ONBOARDING_KEY, '1');
   }, []);
 
-  const connectHealth = useCallback(() => {
-    setPreferences((p) => ({ ...p, healthConnected: true }));
+  const addJournal = useCallback(
+    async (transcript: string, opts?: { source?: 'voice' | 'typed'; durationSec?: number }) => {
+      const bodySummary = body.current
+        ? `sleep ${body.current.sleepHours}h (${body.deltas.sleepPct}% vs baseline), RHR ${body.current.restingHr} (${body.deltas.restingHeartRatePct}%), steps ${body.current.steps}`
+        : undefined;
+      const grok = await analyzeWithGrok(transcript, {
+        recentTopics: language.current.topics.map((t) => t.name),
+        bodySummary,
+      });
+      const entry: JournalEntry = {
+        id: `j-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        transcript: transcript.trim(),
+        durationSec: opts?.durationSec ?? Math.max(5, Math.round(transcript.split(/\s+/).length / 2)),
+        source: opts?.source ?? 'typed',
+        analysis: grok.analysis,
+        reflection: grok.reflection,
+        analysisSource: grok.source,
+      };
+      setJournals((prev) => [...prev, entry]);
+      setLatestReflection(grok.reflection);
+      return entry;
+    },
+    [body, language.current.topics],
+  );
+
+  const logHealth = useCallback((input: { sleepHours: number; restingHr: number; steps: number }) => {
+    const date = new Date().toISOString().slice(0, 10);
+    setHealthLogs((prev) => [
+      ...prev.filter((h) => h.date !== date),
+      {
+        id: `h-${Date.now()}`,
+        date,
+        sleepHours: input.sleepHours,
+        restingHr: input.restingHr,
+        steps: input.steps,
+        source: 'manual',
+      },
+    ]);
   }, []);
 
-  const addRant = useCallback((transcript: string, durationSec: number) => {
-    const analysis = analyzeTranscriptLocally(transcript);
-    const entry: JournalEntry = {
-      id: `j-${Date.now()}`,
-      userId: DEMO_USER.id,
-      timestamp: new Date().toISOString(),
-      transcript,
-      durationSec,
-      analysisId: analysis.id,
-    };
-    analysis.journalId = entry.id;
+  const resetToSeed = useCallback(() => {
+    const seeded = seedTracker();
+    setHealthLogs(seeded.healthLogs);
+    setJournals(seeded.journals);
+  }, []);
 
-    const nextAnalyses = [...analyses, analysis];
-    const snap = computeStressSnapshot(demoHealthSignals, nextAnalyses);
-    const insight = buildInsight(snap, transcript);
+  const clearAll = useCallback(async () => {
+    await clearTracker();
+    setHealthLogs([]);
+    setJournals([]);
+  }, []);
 
-    setJournals((prev) => [...prev, entry]);
-    setAnalyses(nextAnalyses);
-    setLatestInsight(insight);
-    return insight;
-  }, [analyses]);
+  const saveGrokKey = useCallback(async (key: string) => {
+    await setXaiApiKey(key);
+    await refreshGrokFlag();
+  }, [refreshGrokFlag]);
 
-  const value: AppState = {
-    preferences,
+  const removeGrokKey = useCallback(async () => {
+    await clearXaiApiKey();
+    await refreshGrokFlag();
+  }, [refreshGrokFlag]);
+
+  const value: TrackerContextValue = {
+    ready,
+    onboardingComplete,
+    healthLogs,
     journals,
-    analyses,
-    snapshot,
-    latestInsight,
+    baseline: body.baseline,
+    body,
+    language,
+    daySeries,
+    stressScore,
+    coOccurrence,
+    realEntryCount,
+    grokEnabled,
+    latestReflection,
     completeOnboarding,
-    connectHealth,
-    addRant,
+    addJournal,
+    logHealth,
+    resetToSeed,
+    clearAll,
+    saveGrokKey,
+    removeGrokKey,
+    refreshGrokFlag,
   };
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return <TrackerContext.Provider value={value}>{children}</TrackerContext.Provider>;
 }
 
-export function useApp(): AppState {
-  const ctx = useContext(AppContext);
+export function useApp(): TrackerContextValue {
+  const ctx = useContext(TrackerContext);
   if (!ctx) throw new Error('useApp must be used within AppProvider');
   return ctx;
 }
+
+export function formatSleep(hours: number | null | undefined) {
+  if (hours == null) return '—';
+  return sleepLabel(hours);
+}
+
+// keep getXaiApiKey available for track screen prefill
+export { getXaiApiKey };

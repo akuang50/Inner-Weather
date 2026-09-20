@@ -10,10 +10,22 @@ export function FinalCTA() {
           <br />
           <span className="italic text-ink/55">You need to understand yourself.</span>
         </h2>
-        <a href="#demo" className="btn-primary mt-10">
-          Try Stress Monitor
-        </a>
-        <p className="mt-5 text-sm text-muted">Built for HackMIT 2026.</p>
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+          <a href="#demo" className="btn-primary">
+            Try Stress Monitor
+          </a>
+          <a
+            href="https://github.com/akuang50/Inner-Weather#mobile-app-expo"
+            className="btn-secondary"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Get the mobile app
+          </a>
+        </div>
+        <p className="mt-5 text-sm text-muted">
+          Web demo + Expo app · same personal-baseline fusion · HackMIT 2026
+        </p>
       </Reveal>
     </Section>
   )
@@ -39,6 +51,14 @@ export function Footer() {
           </a>
           <a href="#voice" className="transition hover:text-ink">
             Voice
+          </a>
+          <a
+            href="https://github.com/akuang50/Inner-Weather#mobile-app-expo"
+            className="transition hover:text-ink"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Mobile
           </a>
         </div>
         <p className="text-sm text-muted">HackMIT 2026</p>
