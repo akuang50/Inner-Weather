@@ -58,4 +58,6 @@ tonewatch/tone_scores.sqlite
 tonewatch/scores.json
 tonewatch/**/__pycache__/
 tonewatch/**/*.pyc
+server/**/__pycache__/
+server/**/*.pyc
 .pytest_cache/

@@ -15,17 +15,21 @@ import {
   generateSessionDebrief,
   pickCoachTone,
 } from '../lib/chatCoach'
+import { fetchMetaReply } from '../lib/coachApi' // NEW
 import { loadChatStore, saveChatStore } from '../lib/chatStorage'
 import type { ChatSessionRecord, ChatStore } from '../lib/types'
 import { useAuth } from './AuthProvider'
 import { useTracker } from './TrackerProvider'
+
+// CHANGED: added 'meta'
+type ReplySource = 'grok' | 'local' | 'meta'
 
 type ChatContextValue = {
   ready: boolean
   store: ChatStore
   activeSession: ChatSessionRecord | null
   busy: boolean
-  lastSource: 'grok' | 'local' | null
+  lastSource: ReplySource | null
   startSession: () => Promise<string | null>
   sendMessage: (text: string) => Promise<string | null>
   endSession: () => Promise<ChatSessionRecord | null>
@@ -42,7 +46,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [store, setStore] = useState<ChatStore>({ sessions: [], activeSessionId: null })
   const [viewingId, setViewingId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [lastSource, setLastSource] = useState<'grok' | 'local' | null>(null)
+  const [lastSource, setLastSource] = useState<ReplySource | null>(null) // CHANGED
 
   useEffect(() => {
     if (!authReady) return
@@ -142,6 +146,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         stress,
       }
 
+      // Show the user's message immediately
       patchStore((prev) => ({
         ...prev,
         sessions: prev.sessions.map((s) =>
@@ -158,21 +163,55 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           messages: [...activeSession.messages, userMessage],
         }
         const past = store.sessions.filter((s) => s.status === 'completed')
-        const reply = await generateCoachReply({
-          userText: clean,
-          stress,
-          tone,
-          ctx: coachContext,
-          session: sessionWithUser,
-          pastSessions: past,
-        })
-        setLastSource(reply.source)
+
+        // ---- NEW: send to chatbot.py, receive the processed reply ----
+        let replyMessage: ChatSessionRecord['messages'][number]
+        let source: ReplySource
+
+        try {
+          const meta = await fetchMetaReply({
+            // only role + content go to the LLM
+            messages: sessionWithUser.messages.map((m) => ({
+              role: m.role,
+              content: m.content,
+            })),
+            tone,
+            stressScore: stress.score,
+            displayName: user.displayName,
+            memory: past.flatMap((s) => (s.debrief ? [s.debrief.summary] : [])),
+          })
+
+          replyMessage = {
+            id: `m-${Date.now()}-a`,
+            role: 'assistant',
+            content: meta.reply,
+            timestamp: new Date().toISOString(),
+            coachTone: meta.coachTone,
+          }
+          source = 'meta'
+        } catch (err) {
+          // Python server down, key wrong, timeout, etc. -> keep the app working
+          console.warn('Meta backend failed, using local fallback:', err)
+          const local = await generateCoachReply({
+            userText: clean,
+            stress,
+            tone,
+            ctx: coachContext,
+            session: sessionWithUser,
+            pastSessions: past,
+          })
+          replyMessage = local.message
+          source = local.source
+        }
+        // ---------------------------------------------------------------
+
+        setLastSource(source)
 
         patchStore((prev) => ({
           ...prev,
           sessions: prev.sessions.map((s) =>
             s.id === activeSession.id
-              ? { ...s, messages: [...s.messages, reply.message] }
+              ? { ...s, messages: [...s.messages, replyMessage] }
               : s,
           ),
         }))

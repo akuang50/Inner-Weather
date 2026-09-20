@@ -8,6 +8,8 @@
     "ios": "expo start --ios",
     "web": "EXPO_NO_TYPED_ROUTES=1 BROWSER=none expo start --web --localhost",
     "web:open": "EXPO_NO_TYPED_ROUTES=1 expo start --web --localhost",
+    "site": "npm --prefix site run dev -- --host 127.0.0.1 --port 5173",
+    "coach": "cd server && uvicorn chatbot:app --reload --host 127.0.0.1 --port 8000",
     "export:web": "EXPO_NO_TYPED_ROUTES=1 expo export --platform web",
     "typecheck": "tsc --noEmit"
   },
